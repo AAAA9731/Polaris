@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
 
@@ -17,11 +16,11 @@ public partial class MainWindow : Window
         InitializeComponent();
         ApplyText();
 
-        // 管理员重启时带着游戏目录回来，不用玩家再选一遍。
+        // 管理员重启时带着游戏目录回来；否则只看安装器自己所在的目录，不做任何搜索。
         string[] args = Environment.GetCommandLineArgs();
         int at = Array.IndexOf(args, "--game");
-        string start = at >= 0 && at + 1 < args.Length ? GameLocator.Normalize(args[at + 1]) : GameLocator.Detect();
-        SetGame(start, showNotFound: start == null);
+        string start = at >= 0 && at + 1 < args.Length ? GameLocator.Normalize(args[at + 1]) : GameLocator.FromOwnFolder();
+        SetGame(start, showHint: start == null);
     }
 
     void ApplyText()
@@ -31,50 +30,38 @@ public partial class MainWindow : Window
         SubtitleText.Text = Loc.T("Subtitle");
         GamePathLabel.Text = Loc.T("GamePath");
         BrowseButton.Content = Loc.T("Browse");
-        DetectButton.Content = Loc.T("AutoDetect");
-        TabInstall.Header = Loc.T("TabInstall");
-        TabMods.Header = Loc.T("TabMods");
-        TabDiag.Header = Loc.T("TabDiag");
         BepLabel.Text = Loc.T("StatusBepInEx");
         PolLabel.Text = Loc.T("StatusPolaris");
         UninstallButton.Content = Loc.T("BtnUninstall");
         RemoveBepCheck.Content = Loc.T("ChkRemoveBepInEx");
-        ModsHint.Text = Loc.T("ModsHint");
-        ModsEmpty.Text = Loc.T("ModsEmpty");
-        AddModButton.Content = Loc.T("BtnAddMod");
-        OpenModsButton.Content = Loc.T("BtnOpenMods");
-        DiagHint.Text = Loc.T("DiagHint");
-        OpenReportsButton.Content = Loc.T("BtnOpenReports");
-        OpenLogButton.Content = Loc.T("BtnOpenLog");
-        OpenGameButton.Content = Loc.T("BtnOpenGameFolder");
     }
 
     // ================== 游戏目录 ==================
 
-    void SetGame(string path, bool showNotFound = false, string message = null)
+    void SetGame(string path, bool showHint = false, string message = null)
     {
         game = path;
         PathBox.Text = path ?? "";
-        PathMessage.Text = message ?? (showNotFound ? Loc.T("NotFound") : "");
+        PathMessage.Text = message ?? (showHint ? Loc.T("PickGame") : "");
         Refresh();
     }
 
     void OnBrowse(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog { Title = Loc.T("GamePath") };
+        var dialog = new OpenFileDialog
+        {
+            Title = Loc.T("PickGameTitle"),
+            Filter = "AliceInCradle.exe|AliceInCradle.exe",
+            CheckFileExists = true,
+        };
+
         if (dialog.ShowDialog(this) != true)
         {
             return;
         }
 
-        string found = GameLocator.Normalize(dialog.FolderName);
+        string found = GameLocator.Normalize(dialog.FileName);
         SetGame(found ?? game, message: found == null ? Loc.T("InvalidFolder") : null);
-    }
-
-    void OnDetect(object sender, RoutedEventArgs e)
-    {
-        string found = GameLocator.Detect();
-        SetGame(found ?? game, showNotFound: found == null);
     }
 
     void OnDrop(object sender, DragEventArgs e)
@@ -84,17 +71,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        string path = items[0];
-
-        // 拖进来的是 dll 且已经选好游戏：当作要添加的模组。
-        if (game != null && path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-        {
-            AddMods(items.Where(p => p.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)));
-            Tabs.SelectedItem = TabMods;
-            return;
-        }
-
-        string found = GameLocator.Normalize(path);
+        string found = GameLocator.Normalize(items[0]);
         SetGame(found ?? game, message: found == null ? Loc.T("InvalidFolder") : null);
     }
 
@@ -105,11 +82,6 @@ public partial class MainWindow : Window
         bool has = game != null;
         InstallButton.IsEnabled = has && !busy;
         UninstallButton.IsEnabled = false;
-        AddModButton.IsEnabled = has;
-        OpenModsButton.IsEnabled = has;
-        OpenReportsButton.IsEnabled = has;
-        OpenLogButton.IsEnabled = has;
-        OpenGameButton.IsEnabled = has;
 
         if (!has)
         {
@@ -117,9 +89,6 @@ public partial class MainWindow : Window
             BepStatus.Foreground = PolStatus.Foreground = (Brush)FindResource("InkSoft");
             InstallButton.Content = Loc.T("BtnInstall");
             RemoveBepCheck.Visibility = Visibility.Collapsed;
-            ModList.ItemsSource = null;
-            ModsEmpty.Visibility = Visibility.Visible;
-            LastReportText.Text = "";
             return;
         }
 
@@ -149,18 +118,6 @@ public partial class MainWindow : Window
 
         UninstallButton.IsEnabled = !busy && (state.PolarisInstalled || state.BepInExInstalled);
         RemoveBepCheck.Visibility = state.BepInExInstalled ? Visibility.Visible : Visibility.Collapsed;
-
-        RefreshMods();
-
-        string report = InstallEngine.LatestReport(game);
-        LastReportText.Text = report == null ? Loc.T("NoReports") : Loc.T("LastReport", Path.GetFileName(report));
-    }
-
-    void RefreshMods()
-    {
-        List<ModItem> mods = game == null ? new List<ModItem>() : ModScanner.Scan(game);
-        ModList.ItemsSource = mods;
-        ModsEmpty.Visibility = mods.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     // ================== 安装 / 卸载 ==================
@@ -173,6 +130,7 @@ public partial class MainWindow : Window
         }
 
         InstallState before = InstallEngine.GetState(game);
+
         // 点的是“重新安装”（Polaris 已是最新）时，连 BepInEx 一并重装；改动过的原文件会先备份。
         bool reinstallBep = before.PolarisInstalled && before.PolarisUpToDate;
 
@@ -222,7 +180,7 @@ public partial class MainWindow : Window
         }
         catch (UnauthorizedAccessException)
         {
-            // 游戏装在受保护目录（如 Program Files）：问一下，然后以管理员身份重新启动。
+            // 游戏装在受保护目录：问一下，然后以管理员身份重新启动。
             if (MessageBox.Show(this, Loc.T("NeedAdmin"), Loc.T("AppTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 RelaunchAsAdmin();
@@ -266,103 +224,5 @@ public partial class MainWindow : Window
 
         LogBox.AppendText(line + Environment.NewLine);
         LogBox.ScrollToEnd();
-    }
-
-    // ================== 模组 ==================
-
-    void OnModToggle(object sender, RoutedEventArgs e)
-    {
-        if (sender is CheckBox box && box.DataContext is ModItem mod)
-        {
-            if (InstallEngine.IsGameRunning())
-            {
-                // 游戏在跑时 dll 被占用，改名会失败；提示并还原勾选状态。
-                mod.Error = Loc.T("GameRunning");
-                box.IsChecked = mod.Enabled;
-                return;
-            }
-
-            mod.SetEnabled(box.IsChecked == true);
-            box.IsChecked = mod.Enabled;
-        }
-    }
-
-    void OnAddMod(object sender, RoutedEventArgs e)
-    {
-        var dialog = new OpenFileDialog { Filter = "Mod (*.dll)|*.dll", Multiselect = true };
-        if (dialog.ShowDialog(this) == true)
-        {
-            AddMods(dialog.FileNames);
-        }
-    }
-
-    void AddMods(IEnumerable<string> files)
-    {
-        if (game == null)
-        {
-            return;
-        }
-
-        try
-        {
-            Directory.CreateDirectory(InstallEngine.PluginsDir(game));
-            foreach (string file in files)
-            {
-                File.Copy(file, Path.Combine(InstallEngine.PluginsDir(game), Path.GetFileName(file)), overwrite: true);
-            }
-        }
-        catch (UnauthorizedAccessException)
-        {
-            if (MessageBox.Show(this, Loc.T("NeedAdmin"), Loc.T("AppTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-            {
-                RelaunchAsAdmin();
-            }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(this, Loc.T("Failed", ex.Message), Loc.T("AppTitle"));
-        }
-
-        RefreshMods();
-    }
-
-    void OnOpenMods(object sender, RoutedEventArgs e) => OpenPath(game == null ? null : InstallEngine.PluginsDir(game), createIfMissing: true);
-
-    // ================== 诊断 ==================
-
-    void OnOpenReports(object sender, RoutedEventArgs e) => OpenPath(game == null ? null : InstallEngine.ReportsDir(game), createIfMissing: true);
-
-    void OnOpenLog(object sender, RoutedEventArgs e)
-    {
-        if (game != null)
-        {
-            OpenPath(Path.Combine(game, "BepInEx", "LogOutput.log"));
-        }
-    }
-
-    void OnOpenGame(object sender, RoutedEventArgs e) => OpenPath(game);
-
-    static void OpenPath(string path, bool createIfMissing = false)
-    {
-        if (string.IsNullOrEmpty(path))
-        {
-            return;
-        }
-
-        try
-        {
-            if (createIfMissing)
-            {
-                Directory.CreateDirectory(path);
-            }
-
-            if (File.Exists(path) || Directory.Exists(path))
-            {
-                Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
-            }
-        }
-        catch (Exception)
-        {
-        }
     }
 }

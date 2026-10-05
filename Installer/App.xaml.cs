@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 
 namespace PolarisInstaller;
@@ -33,7 +33,7 @@ public partial class App : Application
         {
             string action = silentAt + 1 < args.Length ? args[silentAt + 1] : "";
             int gameAt = Array.IndexOf(args, "--game");
-            string game = gameAt >= 0 && gameAt + 1 < args.Length ? GameLocator.Normalize(args[gameAt + 1]) : GameLocator.Detect();
+            string game = gameAt >= 0 && gameAt + 1 < args.Length ? GameLocator.Normalize(args[gameAt + 1]) : GameLocator.FromOwnFolder();
             if (game == null)
             {
                 Write("game folder not found");

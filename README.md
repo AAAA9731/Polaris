@@ -1,4 +1,4 @@
-# Polaris
+﻿# Polaris
 
 《Alice in Cradle》的 **模组管理器 + 诊断工具**，由三部分组成：
 
@@ -6,14 +6,14 @@
 |---|---|---|
 | **PolarisCore**（BepInEx 插件） | 仓库根目录 | 游戏内：捕获并追踪错误、阶梯式提示、标题画面的模组管理页 |
 | **PolarisWatcher**（独立小程序） | `Watcher/` | 游戏异常退出后弹窗，说明是什么原因、哪个模组 |
-| **PolarisInstaller**（图形安装器） | `Installer/` | 双击安装/更新/卸载 BepInEx + Polaris，管理模组启停 |
+| **PolarisInstaller**（图形安装器） | `Installer/` | 双击安装/更新/卸载 BepInEx + Polaris |
 
 库功能（Game / Drawing / Settings / Content 等 API）已不在 main 中，完整代码保留在 `legacy` 分支与 `pre-slim-v2.0.0` 标签。
 
 ## 玩家：怎么用
 
-运行 `PolarisInstaller.exe`（单个文件，无需另装 .NET）→ 自动找到游戏目录（也可手动选择或拖入）→ 点“安装”。
-在“模组”页可以勾选启用/禁用模组（改动下次启动游戏时生效），也可以拖入 `.dll` 添加模组。
+运行 `PolarisInstaller.exe`（单个文件，无需另装 .NET）→ 点“浏览…”选择游戏的 `AliceInCradle.exe`（或把它/游戏文件夹拖进窗口；把安装器放进游戏目录运行则自动识别）→ 点“安装”。
+模组的启用/禁用在游戏内标题画面的 Polaris 页里操作。
 
 ## 诊断：阶梯式处置
 
