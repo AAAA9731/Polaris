@@ -11,12 +11,14 @@ namespace Polaris
     public class Plugin : BaseUnityPlugin
     {
         internal static new ManualLogSource Logger;
+        internal static Plugin Instance;
 
         private Harmony harmony;
 
         private void Awake()
         {
             Logger = base.Logger;
+            Instance = this;
 
             // 诊断先于一切安装：配置宿主信息、心跳、会话哨兵与看门狗，再接上 Unity/AppDomain/BepInEx 三条错误通道。
             Diagnostics.DiagnosticsHost.Install();
@@ -87,6 +89,9 @@ namespace Polaris
         {
             // 必须在其它模组注册按钮之前占住标题菜单"设置"后面的位置。
             PolarisManagementUI.RegisterButton();
+
+            // 后台检查 GitHub 上有没有新版本；只在玩家点“更新”后才会下载。
+            PolarisAPI.Errors.Guard(() => SelfUpdate.UpdateChecker.Begin(this), "starting the update check");
         }
 
         private void Update()

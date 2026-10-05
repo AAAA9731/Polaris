@@ -127,6 +127,10 @@ jobs:
           Copy-Item polaris_icon.png "$stage/Polaris/"
           Compress-Archive -Path stage/BepInEx -DestinationPath dist/PolarisCore-manual.zip
 
+          # 游戏内自动更新要用：插件下载这个 zip 前先下载它的校验值，核对一致才会解包。
+          $zipHash = (Get-FileHash dist/PolarisCore-manual.zip -Algorithm SHA256).Hash.ToLower()
+          "$zipHash  PolarisCore-manual.zip" | Set-Content dist/PolarisCore-manual.zip.sha256 -Encoding ascii
+
       - uses: actions/upload-artifact@v4
         if: steps.game.outputs.available == 'true'
         with:

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -88,6 +88,9 @@ namespace Polaris.Watcher
                 Log(state, "wait failed: " + e);
                 return 3;
             }
+
+            // 游戏已退出：若插件留下了校验过的更新，趁现在换上（运行中的 dll 无法覆盖）。
+            Updater.TryApply(state);
 
             // 给正常退出路径一点时间删掉哨兵，避免误报。
             Thread.Sleep(1500);

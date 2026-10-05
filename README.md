@@ -43,6 +43,17 @@
 
 发布一个版本：改 `PolarisCore.csproj` 的 `<Version>` → 提交 → `git tag v2.0.1 && git push origin v2.0.1`。
 
+## 游戏内自动更新
+
+游戏启动后约 12 秒，Polaris 会在后台查一次本仓库 GitHub 上最新的 Release（默认每 12 小时最多一次）。有新版本时游戏内弹窗，玩家可以选“更新 / 跳过此版本 / 以后再说”：
+
+- 点“更新”才会下载：先取 `PolarisCore-manual.zip.sha256`，再取 `PolarisCore-manual.zip`，核对 SHA256 一致后解到 `BepInEx/Polaris/update/staging`。
+- 文件不会在游戏运行时被替换（运行中的 dll 无法覆盖）。玩家退出游戏后，`PolarisWatcher.exe` 把新文件换到位，被换掉的旧文件备份在 `BepInEx/Polaris/update/backup`；下次启动游戏会提示“已更新到 vX”。
+- 只信任配置里指定的仓库、只走 HTTPS、只接受 `BepInEx/plugins/` 下的文件。玩家不确认就什么都不会下载。
+- 配置在 `BepInEx/config/Polaris/_polaris_update.cfg`：`CheckForUpdates`（总开关）、`CheckIntervalHours`、`Repository`。
+
+因此发布新版本只需：改 `<Version>` → 提交 → 打标签（见上文）。Release 里的 `PolarisCore-manual.zip` 与它的 `.sha256` 由 CI 自动附上。
+
 ## 开发者：构建
 
 1. 在仓库**上一级目录**创建 `aic_path.txt`，单行写游戏根目录（含 `AliceInCradle_Data` 的那一层）。

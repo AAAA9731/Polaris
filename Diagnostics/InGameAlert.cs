@@ -22,8 +22,18 @@ namespace Polaris.Diagnostics
         const float InSeconds = 0.38f;
         const float OutSeconds = 0.26f;
 
-        sealed class Item
+        /// <summary>提示框上的一个自定义按钮；<see cref="OnClick"/> 返回 true 表示点完后关闭提示框。</summary>
+        internal sealed class NoticeButton
         {
+            internal string Label;
+            internal Func<bool> OnClick;
+        }
+
+        internal sealed class Item
+        {
+            /// <summary>非空时提示框画这些按钮，而不是"禁用/报告/忽略"那三个（自动更新等场景用）。</summary>
+            internal List<NoticeButton> Buttons;
+
             internal string Key;
             internal string Title;
             internal string Body;
@@ -98,6 +108,12 @@ namespace Polaris.Diagnostics
             }
 
             inbox.Enqueue(new Inbound { Command = Command.Persistent, Item = new Item { Key = key, Title = title, Body = body, Owner = owner, ReportPath = reportPath } });
+        }
+
+        /// <summary>弹出一个带自定义按钮的提示框（主线程调用）；字段可在显示后继续修改，用来推进"下载中→已就绪"这类状态。</summary>
+        internal static void ShowNotice(Item item)
+        {
+            inbox.Enqueue(new Inbound { Command = Command.Persistent, Item = item });
         }
 
         internal static void Critical(string reason, string culprit, AssemblyOwner owner, bool quit)
@@ -415,20 +431,54 @@ namespace Polaris.Diagnostics
 
             float by = rect.yMax - 58f;
 
-            if (CanDisable(item.Owner) && Button(new Rect(tx, by, 230f, 36f), AlertStrings.BtnDisable))
+            if (item.Buttons != null)
             {
-                item.Status = Disable(item.Owner);
-            }
+                // 自定义按钮：从右往左排；点中返回 true 的会关闭提示框。
+                float x = rect.xMax - 28f;
+                for (int i = 0; i < item.Buttons.Count; i++)
+                {
+                    NoticeButton nb = item.Buttons[i];
+                    float w = Mathf.Max(110f, nb.Label.Length * 15f + 56f);
+                    x -= w;
+                    if (Button(new Rect(x, by, w, 36f), nb.Label))
+                    {
+                        bool close = false;
+                        try
+                        {
+                            close = nb.OnClick();
+                        }
+                        catch (Exception)
+                        {
+                        }
 
-            if (item.ReportPath != null && Button(new Rect(tx + 238f, by, 110f, 36f), AlertStrings.BtnReport))
-            {
-                OpenFile(item.ReportPath);
-            }
+                        if (close)
+                        {
+                            item.DyingAt = Time.realtimeSinceStartup;
+                        }
 
-            if (Button(new Rect(rect.xMax - 28f - 130f, by, 130f, 36f), AlertStrings.BtnIgnore)
-                || live && Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+                        break;
+                    }
+
+                    x -= 10f;
+                }
+            }
+            else
             {
-                item.DyingAt = Time.realtimeSinceStartup;
+                if (CanDisable(item.Owner) && Button(new Rect(tx, by, 230f, 36f), AlertStrings.BtnDisable))
+                {
+                    item.Status = Disable(item.Owner);
+                }
+
+                if (item.ReportPath != null && Button(new Rect(tx + 238f, by, 110f, 36f), AlertStrings.BtnReport))
+                {
+                    OpenFile(item.ReportPath);
+                }
+
+                if (Button(new Rect(rect.xMax - 28f - 130f, by, 130f, 36f), AlertStrings.BtnIgnore)
+                    || live && Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+                {
+                    item.DyingAt = Time.realtimeSinceStartup;
+                }
             }
 
             GUI.matrix = saved;
