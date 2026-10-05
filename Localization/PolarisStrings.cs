@@ -13,6 +13,7 @@
         internal const string TitleVersionLineDesc = "&" + P + "title_version.desc";
         internal const string ErrorNotice = "&" + P + "error_notice";
         internal const string ErrorNoticeDesc = "&" + P + "error_notice.desc";
+        internal const string TabTitle = "&" + P + "tab_title";
         internal const string Alerts = "&" + P + "alerts";
         internal const string AlertsDesc = "&" + P + "alerts.desc";
         internal const string AlertLevel = "&" + P + "alert_level";
@@ -77,6 +78,12 @@
                 ["ja"] = "前回の実行でMODエラー・クラッシュ・フリーズがあった場合、"
                        + "タイトル画面に概要を表示します。\n"
                        + "レポートはどちらでも BepInEx/Polaris/reports に出力されます。",
+            });
+
+            loc.Register(P + "tab_title", new LocalizedText("Polaris Settings")
+            {
+                ["zh"] = "Polaris 设置",
+                ["ja"] = "Polaris 設定",
             });
 
             loc.Register(P + "alerts", new LocalizedText("In-game error alerts")

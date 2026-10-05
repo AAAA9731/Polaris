@@ -76,17 +76,23 @@ PolarisInstaller.exe --silent install|uninstall --game "<游戏目录>" [--remov
 - 只信任配置里指定的仓库，只走 HTTPS，只接受 `BepInEx/plugins/` 下的文件。玩家不确认，什么都不会下载。
 - 校验值与更新包在同一个 Release 里，它能防传输损坏，但**防不了发布账号被盗后被换包**。
 
-总开关在游戏“设置”界面的 Polaris 分区（设置项 `CheckForUpdates`，存在 `BepInEx/config/Polaris/polaris.cfg`）；检查间隔和仓库在 `BepInEx/config/Polaris/_polaris_update.cfg`：`CheckIntervalHours`、`Repository`。
+总开关在游戏“设置”界面的 Polaris 标签页（设置项 `CheckForUpdates`，存在 `BepInEx/config/Polaris/polaris.cfg`）；检查间隔和仓库在 `BepInEx/config/Polaris/_polaris_update.cfg`：`CheckIntervalHours`、`Repository`。
 
 ## 诊断配置
 
 阈值都在 `BepInEx/config/Polaris/_polaris_diagnostics.cfg`：
 
 - `[Watchdog]`：卡死检测的警告与报告阈值、心跳写盘间隔 `HeartbeatSeconds`。
-- `[Severity]`：各级升级条件（`EscalateKinds`、`CriticalStormSeconds`、`CriticalStormMods`、`CriticalHangSeconds`）和提示冷却时间。游戏内提示的开关、最低级别、停留时间、位置，以及严重错误时是否自动退出，在游戏“设置”界面的 Polaris 分区里改（存在 `polaris.cfg`）。
+- `[Severity]`：各级升级条件（`EscalateKinds`、`CriticalStormSeconds`、`CriticalStormMods`、`CriticalHangSeconds`）和提示冷却时间。游戏内提示的开关、最低级别、停留时间、位置，以及严重错误时是否自动退出，在游戏“设置”界面的 Polaris 标签页里改（存在 `polaris.cfg`）。
 - `[CrashWindow]`：是否启动崩溃观察者。
 
 报告写在 `BepInEx/Polaris/reports/`：每局一个文件，同类错误只记一次，最多保留 20 份。
+
+## 设置界面的 Polaris 标签页
+
+原版设置界面的标签页由 `UiCFG.CATEG` 枚举写死，没有扩展口。Polaris 借用了其中平时为空、被整页隐藏的 `effects_sp`（特殊效果）分类：没有条目时塞一个占位条目让原版建出这一页，再接管这一页的绘制。标签图标用字体里有字形的 ✴，页眉标题改为“Polaris 设置”。实现见 `Patch/Patch_UiCFG_PolarisTab.cs`。
+
+如果玩家恰好解锁了原版的特殊项，这一页已经有原版内容，Polaris 就不接管，而是把设置项追加在那些内容后面。
 
 ## 旧代码
 

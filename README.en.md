@@ -24,7 +24,7 @@ The vanilla game's own errors won't bother you. Mods that have had persistent or
 
 **Crash window.** When the game exits unexpectedly, a window pops up explaining the likely cause: the exit code, the faulting module recorded by the system, errors before the crash, and the most suspicious mod.
 
-**Settings.** In the game's Settings screen (the Polaris section at the bottom of the General tab) you can adjust: the title-screen version line, the previous-session error notice, in-game error alerts (on/off, minimum level, how long they stay, which screen corner), automatic update checks, and whether the game exits automatically on a severe error.
+**Settings.** In the game's Settings screen (the last tab, marked with an eight-pointed star ✴) you can adjust: the title-screen version line, the previous-session error notice, in-game error alerts (on/off, minimum level, how long they stay, which screen corner), automatic update checks, and whether the game exits automatically on a severe error.
 
 **Automatic updates.** After the game starts, Polaris checks for a new version. If there is one, it asks you in-game, and the download only starts once you click "Update"; files are replaced automatically after you quit the game, so your current session isn't interrupted.
 
@@ -52,11 +52,11 @@ Run the installer, select the game folder, and click "Uninstall". It only remove
 
 **Where are the reports and logs?** Error reports are in `BepInEx/Polaris/reports/` in the game folder — one file per game session, keeping the 20 most recent; the BepInEx log is at `BepInEx/LogOutput.log`.
 
-**How do I turn off update checks?** Turn off "Automatic update checks" in the Polaris section at the bottom of the General tab in the game's Settings screen.
+**How do I turn off update checks?** Turn off "Automatic update checks" on the Polaris tab of the game's Settings screen.
 
 **Polaris stopped working after a game update?** Polaris is compiled for a specific game version (currently ver030i). After a major game update, you may need to wait for a new Polaris release; if its core patches stop working, it will tell you and exit rather than keep running in a broken state.
 
-**Don't want in-game error alerts?** In the Polaris section of the Settings screen, turn off "In-game error alerts", set "Minimum alert level" to "Persistent and above", or move the alerts to another corner (error reports are still written). Finer thresholds live in `BepInEx/config/Polaris/_polaris_diagnostics.cfg`.
+**Don't want in-game error alerts?** On the Polaris tab of the Settings screen, turn off "In-game error alerts", set "Minimum alert level" to "Persistent and above", or move the alerts to another corner (error reports are still written). Finer thresholds live in `BepInEx/config/Polaris/_polaris_diagnostics.cfg`.
 
 ## For developers
 

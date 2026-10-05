@@ -44,8 +44,11 @@ namespace Polaris.Settings
         /// <summary>当前这个 UiCFG 实例上都画了哪些设置项，供 <see cref="Sync"/> 回拨界面。</summary>
         static readonly List<SettingDefinition> rendered = [];
 
-        /// <summary>在主标签页尾部追加所有已注册的分区；由 <c>UiCFG.createBoxDesignerContentMain</c> 末尾的委托调用。</summary>
-        internal static void Append(UiCFG cfg)
+        /// <summary>
+        /// 把所有已注册的分区画进当前标签页。<paramref name="ownTab"/> 为 true 表示这一页是 Polaris 专属页（页内没有别的东西），
+        /// 此时第一个分区顶上不再画分隔线。
+        /// </summary>
+        internal static void Append(UiCFG cfg, bool ownTab = false)
         {
             rendered.Clear();
             SettingsSearchFilter.Begin(cfg);
@@ -59,12 +62,14 @@ namespace Polaris.Settings
 
             UiBoxDesigner box = cfg.BxOut;
 
+            bool first = true;
             foreach (SettingGroup group in groups)
             {
                 try
                 {
                     SettingsSearchFilter.GroupRecorder recorder = SettingsSearchFilter.OpenGroup(group);
-                    GroupHeader(box, group, recorder);
+                    GroupHeader(box, group, recorder, skipRule: ownTab && first);
+                    first = false;
                     foreach (SettingDefinition setting in group.Settings)
                     {
                         SettingsRowRenderer.Render(cfg, box, setting, recorder.OpenRow(setting));
@@ -85,18 +90,22 @@ namespace Polaris.Settings
         /// <summary>
         /// 分区标题：一条分隔线 + 一行居中文字。分隔线照抄 <c>UiBoxDesigner.Hr</c> 而非直接调用，因为搜索过滤需要拿到 <c>addHr</c> 返回的块（<c>Hr()</c> 不返回）。
         /// </summary>
-        static void GroupHeader(UiBoxDesigner box, SettingGroup group, SettingsSearchFilter.GroupRecorder recorder)
+        static void GroupHeader(UiBoxDesigner box, SettingGroup group, SettingsSearchFilter.GroupRecorder recorder, bool skipRule)
         {
-            box.Br();
-            recorder.AddHeader(box.addHr(new DsnDataHr
+            if (!skipRule)
             {
-                draw_width_rate = HrWidthRatio,
-                swidth = box.use_w,
-                Col = C32.d2c(HrColor),
-                margin_t = HrMargin,
-                margin_b = HrMargin,
-                line_height = 1f,
-            }));
+                box.Br();
+                recorder.AddHeader(box.addHr(new DsnDataHr
+                {
+                    draw_width_rate = HrWidthRatio,
+                    swidth = box.use_w,
+                    Col = C32.d2c(HrColor),
+                    margin_t = HrMargin,
+                    margin_b = HrMargin,
+                    line_height = 1f,
+                }));
+            }
+
             box.Br();
 
             // Polaris 自己的分区在标题上方放一个八芒星剪影。
