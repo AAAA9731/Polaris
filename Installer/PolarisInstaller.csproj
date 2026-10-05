@@ -45,6 +45,7 @@
       <EmbeddedResource Include="..\bin\$(Configuration)\netstandard2.1\PolarisCore.dll" LogicalName="polaris/PolarisCore.dll" />
       <EmbeddedResource Include="..\Watcher\bin\$(Configuration)\net48\PolarisWatcher.exe" LogicalName="polaris/PolarisWatcher.exe" />
       <EmbeddedResource Include="..\polaris_icon.png" LogicalName="polaris/polaris_icon.png" />
+      <EmbeddedResource Include="..\polaris_star.png" LogicalName="polaris/polaris_star.png" />
     </ItemGroup>
   </Target>
 

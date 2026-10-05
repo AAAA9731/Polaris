@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -63,8 +63,9 @@ internal static class InstallEngine
             {
                 list.Add(new PayloadFile(Path.Combine("BepInEx", "plugins", "PolarisCore.dll"), name, true));
             }
-            else if (normalized == "polaris/PolarisWatcher.exe" || normalized == "polaris/polaris_icon.png")
+            else if (normalized.StartsWith("polaris/", StringComparison.Ordinal))
             {
+                // Watcher、图片等：都放在 plugins/Polaris/ 下。
                 list.Add(new PayloadFile(Path.Combine("BepInEx", "plugins", "Polaris", Path.GetFileName(normalized)), name, true));
             }
         }

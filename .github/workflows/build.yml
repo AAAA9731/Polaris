@@ -125,6 +125,7 @@ jobs:
           Copy-Item bin/Release/netstandard2.1/PolarisCore.dll $stage/
           Copy-Item Watcher/bin/Release/net48/PolarisWatcher.exe "$stage/Polaris/"
           Copy-Item polaris_icon.png "$stage/Polaris/"
+          Copy-Item polaris_star.png "$stage/Polaris/"
           Compress-Archive -Path stage/BepInEx -DestinationPath dist/PolarisCore-manual.zip
 
           # 游戏内自动更新要用：插件下载这个 zip 前先下载它的校验值，核对一致才会解包。

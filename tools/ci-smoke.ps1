@@ -23,6 +23,7 @@ function Assert($cond, $msg) { if (-not $cond) { throw "断言失败：$msg" } }
 Run "install"
 Assert (Test-Path "$fake\BepInEx\plugins\PolarisCore.dll") "PolarisCore.dll 已安装"
 Assert (Test-Path "$fake\BepInEx\plugins\Polaris\PolarisWatcher.exe") "PolarisWatcher.exe 已安装"
+Assert (Test-Path "$fake\BepInEx\plugins\Polaris\polaris_star.png") "polaris_star.png 已安装"
 Assert (Test-Path "$fake\BepInEx\core\BepInEx.Unity.Mono.dll") "BepInEx 已安装"
 Assert ((Get-Content "$fake\winhttp.dll" -Raw) -ne "original`r`n") "winhttp.dll 已被替换"
 

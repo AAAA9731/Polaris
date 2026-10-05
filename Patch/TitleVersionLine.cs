@@ -12,6 +12,12 @@ namespace Polaris.Patch
     {
         internal static void Append(SceneTitleTemp instance)
         {
+            // 玩家关闭该功能时直接不追加，无需擦除已有文本。
+            if (!Settings.PolarisSettings.ShowTitleVersionLine)
+            {
+                return;
+            }
+
             TextRenderer tx = instance?.TxVer;
             if (tx == null)
             {

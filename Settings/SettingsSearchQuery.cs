@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
-namespace Polaris
+namespace Polaris.Settings
 {
     /// <summary>
     /// 设置项搜索框的匹配规则，只做字符串判定。匹配对象一律是已按当前语言求值的显示串（非本地化键、非其它语言译文），确保玩家眼前看到的字才能搜到。
     /// </summary>
-    internal static class SearchQuery
+    internal static class SettingsSearchQuery
     {
         /// <summary>把查询串切成若干条件（空白分隔，AND 语义）；空数组表示无查询，即全部命中。</summary>
         internal static string[] Tokenize(string query)

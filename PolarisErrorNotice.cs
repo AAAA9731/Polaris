@@ -105,6 +105,12 @@ namespace Polaris
                     return false;
                 }
 
+                // 玩家关掉的是"弹这一页"，不是"记录错误"：待读状态仍留在配置里，不会被这次关闭吞掉。
+                if (!Settings.PolarisSettings.ShowErrorNotice)
+                {
+                    return false;
+                }
+
                 return ResolveEntries() && pendingCount.Value > 0;
             }
         }

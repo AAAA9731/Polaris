@@ -5,6 +5,9 @@
         /// <summary>主菜单按钮相关 API。</summary>
         public static MainMenuAPI MainMenu { get; } = new();
 
+        /// <summary>设置项相关 API：声明的设置项会渲染进原版设置界面并自动持久化。</summary>
+        public static Settings.SettingsAPI Settings { get; } = new();
+
         /// <summary>本地化 resolver 注册表：注册 key→文案回调，供原版 <c>TX.Get</c> 优先采用。</summary>
         public static Localization.LocalizationAPI Localization { get; } = new();
 

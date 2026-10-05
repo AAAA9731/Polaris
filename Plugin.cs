@@ -31,6 +31,9 @@ namespace Polaris
 
             PolarisAPI.Errors.Guard(ReportLastSession, "reading how the previous session ended");
 
+            // 内置文案表必须早于 Start 阶段的设置项扫描，绑定配置时要用说明文字查表。
+            Localization.PolarisStrings.Register();
+
             harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
             PatchAllIndividually();
 
@@ -87,6 +90,9 @@ namespace Polaris
         /// <summary>Polaris 自己的每帧泵：驱动就绪门控、语言变更探测、地图代数推进及能力层回调，供所有下游模组共用。</summary>
         private void Start()
         {
+            // 先扫描设置项（读出玩家存的值），再启动依赖这些值的功能。
+            PolarisAPI.Errors.Guard(Settings.SettingsAttributeScanner.ScanAll, "registering the settings");
+
             // 必须在其它模组注册按钮之前占住标题菜单"设置"后面的位置。
             PolarisManagementUI.RegisterButton();
 

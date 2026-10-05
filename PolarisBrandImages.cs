@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using UnityEngine;
 using XX;
@@ -9,9 +9,12 @@ namespace Polaris
     internal static class PolarisBrandImages
     {
         const string LogoName = "polaris_icon";
+        const string StarName = "polaris_star";
 
         static bool logoResolved;
         static MImage logo;
+        static bool starResolved;
+        static MImage star;
 
         /// <summary>Polaris 的 logo；图片缺失或读取失败时返回 null（纯装饰，调用方整行跳过）。</summary>
         internal static MImage Logo
@@ -24,6 +27,21 @@ namespace Polaris
                     logo = Load(LogoName);
                 }
                 return logo;
+            }
+        }
+
+        /// <summary>八芒星剪影（深墨色、透明底），用在设置界面的 Polaris 分区标题上；图片缺失时返回 null，调用方整行跳过。</summary>
+        internal static MImage Star
+        {
+            get
+            {
+                if (!starResolved)
+                {
+                    starResolved = true;
+                    star = Load(StarName);
+                }
+
+                return star;
             }
         }
 

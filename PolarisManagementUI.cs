@@ -233,7 +233,7 @@ namespace Polaris
                 return 0;
             }
 
-            string[] tokens = SearchQuery.Tokenize(query);
+            string[] tokens = Settings.SettingsSearchQuery.Tokenize(query);
             int matched = 0;
 
             try
@@ -243,7 +243,7 @@ namespace Polaris
                     PolarisModInfo info = row.Record.Info;
 
                     // 匹配文件名、展示名、作者、简介——都是原样展示的字面量，搜到什么就能看到什么。
-                    bool hit = SearchQuery.MatchesAny(
+                    bool hit = Settings.SettingsSearchQuery.MatchesAny(
                         tokens, row.Record.DisplayName,
                         info?.DisplayName, info?.Author, info?.Description);
 

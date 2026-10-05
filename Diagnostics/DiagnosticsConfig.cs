@@ -49,14 +49,11 @@ namespace Polaris.Diagnostics
         static ConfigEntry<bool> killOnHang;
         static ConfigEntry<bool> crashWindow;
         static ConfigEntry<float> heartbeatSeconds;
-        static ConfigEntry<bool> toastEnabled;
-        static ConfigEntry<float> toastSeconds;
         static ConfigEntry<float> toastCooldownSeconds;
         static ConfigEntry<int> escalateKinds;
         static ConfigEntry<float> criticalStormSeconds;
         static ConfigEntry<int> criticalStormMods;
         static ConfigEntry<float> criticalHangSeconds;
-        static ConfigEntry<bool> autoQuit;
         static ConfigEntry<float> quitCountdownSeconds;
         static ConfigEntry<float> stormWindowSeconds;
         static ConfigEntry<int> stormThreshold;
@@ -105,11 +102,7 @@ namespace Polaris.Diagnostics
                 crashWindow = file.Bind(CrashSection, "Enabled", true,
                     "Start PolarisWatcher.exe alongside the game; if the game exits abnormally it shows a window explaining the likely cause.");
 
-                toastEnabled = file.Bind(SeveritySection, "ToastEnabled", true,
-                    "Show an in-game popup when a mod error is detected (level 1 corner toast, level 2 dialog, level 3 exit notice). Reports and logs are written either way.");
 
-                toastSeconds = file.Bind(SeveritySection, "ToastSeconds", 8f,
-                    "How long a corner toast stays on screen before fading out, in seconds.");
 
                 toastCooldownSeconds = file.Bind(SeveritySection, "ToastCooldownSeconds", 20f,
                     "Minimum gap between two new toasts for the same mod. Errors inside the gap only update the counter on the existing toast.");
@@ -126,8 +119,6 @@ namespace Polaris.Diagnostics
                 criticalHangSeconds = file.Bind(SeveritySection, "CriticalHangSeconds", 120f,
                     "If the main thread stays unresponsive this long the game is ended (level 3). Must be larger than ReportSeconds.");
 
-                autoQuit = file.Bind(SeveritySection, "AutoQuit", true,
-                    "Let Polaris end the game itself on a level 3 error. When off, level 3 only shows a warning and the game keeps running.");
 
                 quitCountdownSeconds = file.Bind(SeveritySection, "QuitCountdownSeconds", 10f,
                     "Seconds the level 3 notice stays up before the game exits (the player can also quit immediately).");
@@ -167,14 +158,14 @@ namespace Polaris.Diagnostics
 
         internal static bool CrashWindow => crashWindow?.Value ?? true;
 
-        internal static bool ToastEnabled => toastEnabled?.Value ?? true;
-        internal static float ToastSeconds => Sane(toastSeconds?.Value ?? 8f, 2f, 8f);
+        internal static bool ToastEnabled => Settings.PolarisSettings.ShowInGameAlerts;
+        internal static float ToastSeconds => Sane(Settings.PolarisSettings.AlertSeconds, 2f, 8f);
         internal static float ToastCooldownSeconds => Sane(toastCooldownSeconds?.Value ?? 20f, 1f, 20f);
         internal static int EscalateKinds => Sane(escalateKinds?.Value ?? 4, 2, 4);
         internal static float CriticalStormSeconds => Sane(criticalStormSeconds?.Value ?? 60f, 5f, 60f);
         internal static int CriticalStormMods => Sane(criticalStormMods?.Value ?? 3, 2, 3);
         internal static float CriticalHangSeconds => Sane(criticalHangSeconds?.Value ?? 120f, 20f, 120f);
-        internal static bool AutoQuit => autoQuit?.Value ?? true;
+        internal static bool AutoQuit => Settings.PolarisSettings.AutoQuitOnCritical;
         internal static float QuitCountdownSeconds => Sane(quitCountdownSeconds?.Value ?? 10f, 3f, 10f);
 
         internal static bool KillOnHang => killOnHang?.Value ?? DefaultKillOnHang;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using BepInEx.Configuration;
 
@@ -10,7 +10,6 @@ namespace Polaris.SelfUpdate
         const string FileName = "_polaris_update.cfg";
 
         static bool resolved;
-        static ConfigEntry<bool> enabled;
         static ConfigEntry<float> intervalHours;
         static ConfigEntry<string> repository;
         static ConfigEntry<string> apiBase;
@@ -31,8 +30,6 @@ namespace Polaris.SelfUpdate
                 var file = new ConfigFile(Path.Combine(dir, FileName), saveOnInit: false);
                 file.SaveOnConfigSet = false;
 
-                enabled = file.Bind("Update", "CheckForUpdates", true,
-                    "Check GitHub for a newer Polaris release when the game starts. A popup asks before anything is downloaded; nothing is installed without your confirmation.");
 
                 intervalHours = file.Bind("Update", "CheckIntervalHours", 12f,
                     "Minimum hours between two update checks.");
@@ -52,7 +49,7 @@ namespace Polaris.SelfUpdate
             }
         }
 
-        internal static bool Enabled => enabled?.Value ?? true;
+        internal static bool Enabled => Settings.PolarisSettings.CheckForUpdates;
         internal static float IntervalHours => Math.Max(0.1f, intervalHours?.Value ?? 12f);
         internal static string Repository => string.IsNullOrWhiteSpace(repository?.Value) ? "AAAA9731/Polaris" : repository.Value.Trim();
         internal static string ApiBase => (string.IsNullOrWhiteSpace(apiBase?.Value) ? "https://api.github.com" : apiBase.Value.Trim()).TrimEnd('/');

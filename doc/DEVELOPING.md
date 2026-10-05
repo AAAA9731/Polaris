@@ -17,8 +17,9 @@ Diagnostics/     诊断：捕获、归因、看门狗、会话哨兵、严重度
 SelfUpdate/      游戏内自动更新
 Contracts/       诊断的公开数据类型
 Infra/           错误、健康、路径等基础设施
-Patch/           标题画面补丁（模组管理页入口、告知页）
-Localization/    内置三语文案
+Settings/        设置项框架：给静态字段标 `[PolarisSetting]` 即可渲染进原版设置界面并自动保存；`PolarisSettings.cs` 是 Polaris 自己的设置项
+Patch/           标题画面补丁（模组管理页入口、告知页）与设置界面（UiCFG）补丁
+Localization/    内置三语文案（含设置项文案）
 Watcher/         PolarisWatcher.exe
 Installer/       PolarisInstaller（Payload/ 里是随包分发的 BepInEx 文件）
 tools/           pack-managed.ps1（打包游戏程序集）、ci-smoke.ps1（安装器冒烟测试）
@@ -75,14 +76,14 @@ PolarisInstaller.exe --silent install|uninstall --game "<游戏目录>" [--remov
 - 只信任配置里指定的仓库，只走 HTTPS，只接受 `BepInEx/plugins/` 下的文件。玩家不确认，什么都不会下载。
 - 校验值与更新包在同一个 Release 里，它能防传输损坏，但**防不了发布账号被盗后被换包**。
 
-配置文件是 `BepInEx/config/Polaris/_polaris_update.cfg`：`CheckForUpdates`（总开关）、`CheckIntervalHours`、`Repository`。
+总开关在游戏“设置”界面的 Polaris 分区（设置项 `CheckForUpdates`，存在 `BepInEx/config/Polaris/polaris.cfg`）；检查间隔和仓库在 `BepInEx/config/Polaris/_polaris_update.cfg`：`CheckIntervalHours`、`Repository`。
 
 ## 诊断配置
 
 阈值都在 `BepInEx/config/Polaris/_polaris_diagnostics.cfg`：
 
 - `[Watchdog]`：卡死检测的警告与报告阈值、心跳写盘间隔 `HeartbeatSeconds`。
-- `[Severity]`：游戏内提示开关 `ToastEnabled`、各级升级条件（`EscalateKinds`、`CriticalStormSeconds`、`CriticalStormMods`、`CriticalHangSeconds`）、`AutoQuit`（关掉后严重级别只提示、不会主动退出）。
+- `[Severity]`：各级升级条件（`EscalateKinds`、`CriticalStormSeconds`、`CriticalStormMods`、`CriticalHangSeconds`）和提示冷却时间。游戏内提示的开关、最低级别、停留时间、位置，以及严重错误时是否自动退出，在游戏“设置”界面的 Polaris 分区里改（存在 `polaris.cfg`）。
 - `[CrashWindow]`：是否启动崩溃观察者。
 
 报告写在 `BepInEx/Polaris/reports/`：每局一个文件，同类错误只记一次，最多保留 20 份。

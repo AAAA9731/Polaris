@@ -92,7 +92,8 @@ namespace Polaris.Diagnostics
 
         internal static void Toast(string key, string title, string body, AssemblyOwner owner, string reportPath)
         {
-            if (!DiagnosticsConfig.ToastEnabled)
+            // "仅持续及以上"：轻微级别不弹，只写报告。
+            if (!DiagnosticsConfig.ToastEnabled || Settings.PolarisSettings.AlertMinLevel >= 1)
             {
                 return;
             }
@@ -252,7 +253,7 @@ namespace Polaris.Diagnostics
                 float width = Screen.width / scale;
                 float height = VirtualHeight;
 
-                DrawToasts(width);
+                DrawToasts(width, height);
 
                 if (modal != null && critical == null)
                 {
@@ -325,9 +326,14 @@ namespace Polaris.Diagnostics
             return saved;
         }
 
-        static void DrawToasts(float width)
+        static void DrawToasts(float width, float height)
         {
-            float y = 16f;
+            int corner = Settings.PolarisSettings.AlertCorner;
+            bool right = corner == 0 || corner == 2;
+            bool bottom = corner >= 2;
+
+            // 顶部角从上往下排，底部角从下往上排；离场的不占位。
+            float y = bottom ? height - 16f : 16f;
             float follow = 1f - Mathf.Exp(-Time.unscaledDeltaTime * 14f);
 
             for (int i = toasts.Count - 1; i >= 0; i--)
@@ -336,14 +342,16 @@ namespace Polaris.Diagnostics
                 float w = 400f;
                 float h = toast.Expanded ? 204f : 70f;
 
-                // 位置平滑跟随：上面的提示消失或展开时，下面的会顺滑地挪过去，而不是瞬移。
-                toast.Y = toast.Y < 0f ? y : Mathf.Lerp(toast.Y, y, follow);
+                float targetY = bottom ? y - h : y;
+
+                // 位置平滑跟随：别的提示消失或展开时，这条会顺滑地挪过去，而不是瞬移。
+                toast.Y = toast.Y < 0f ? targetY : Mathf.Lerp(toast.Y, targetY, follow);
 
                 Phase(toast.Born, toast.DyingAt, out float alpha, out float pop);
 
-                // 从屏幕右侧滑入、滑出。
-                float slide = (1f - pop) * 80f;
-                var rect = new Rect(width - w - 16f + slide, toast.Y, w, h);
+                // 从所在一侧的屏幕边缘滑入、滑出。
+                float slide = (1f - pop) * 80f * (right ? 1f : -1f);
+                var rect = new Rect((right ? width - w - 16f : 16f) + slide, toast.Y, w, h);
 
                 bool live = toast.DyingAt < 0f;
                 bool enabled = GUI.enabled;
@@ -396,7 +404,7 @@ namespace Polaris.Diagnostics
                 // 正在离场的提示不再占位，让后面的提示提前补上来。
                 if (live)
                 {
-                    y += h + 8f;
+                    y += bottom ? -(h + 8f) : h + 8f;
                 }
             }
 
