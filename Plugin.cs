@@ -4,7 +4,6 @@ using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.Mono;
 using HarmonyLib;
-using Polaris.Components;
 
 namespace Polaris
 {
@@ -19,12 +18,9 @@ namespace Polaris
         {
             Logger = base.Logger;
 
-            // Core 自带的基础捕获先于任何组件安装；高级诊断缺失或加载失败时仍能留下错误日志。
+            // 诊断先于一切安装：配置宿主信息、心跳、会话哨兵与看门狗，再接上 Unity/AppDomain/BepInEx 三条错误通道。
+            Diagnostics.DiagnosticsHost.Install();
             Diagnostics.CoreErrorCapture.Install();
-
-            // 先发现组件并执行极早期注册；Diagnostics 在这里向 Core 的契约注册实现。
-            ComponentHost.Discover();
-            ComponentHost.Bootstrap();
 
             // 目录建不出来不该把整个 Awake 掀掉，否则 Unity 不会再调 Start，子系统全部起不来。
             PolarisAPI.Errors.Guard(
@@ -32,12 +28,6 @@ namespace Polaris
                 "creating the Polaris directory structure");
 
             PolarisAPI.Errors.Guard(ReportLastSession, "reading how the previous session ended");
-
-            // 内置文案表必须早于 Start 阶段的设置项扫描，绑定配置时要用说明文字查表。
-            Localization.PolarisStrings.Register();
-
-            // 组件是普通 DLL，不带 BepInPlugin；由唯一的 PolarisCore 插件发现并驱动。
-            ComponentHost.Awake();
 
             harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
             PatchAllIndividually();
@@ -65,7 +55,7 @@ namespace Polaris
         {
             int applied = 0;
 
-            foreach (Assembly assembly in ComponentHost.Assemblies)
+            foreach (Assembly assembly in new[] { typeof(Plugin).Assembly })
             {
                 foreach (Type type in AccessTools.GetTypesFromAssembly(assembly))
                 {
@@ -92,29 +82,25 @@ namespace Polaris
             Logger.LogMessage($"[Polaris] Applied {applied} Harmony patches.");
         }
 
-        /// <summary>各子系统初始化统一放在 Start（此时所有插件已完成 Awake，反射扫描才看得到完整插件名单）。下面顺序有硬约束：Res 须早于 PUI，Lang resolver 须早于设置项扫描。</summary>
+        /// <summary>Polaris 自己的每帧泵：驱动就绪门控、语言变更探测、地图代数推进及能力层回调，供所有下游模组共用。</summary>
         private void Start()
         {
-            ComponentHost.Start();
+            // 必须在其它模组注册按钮之前占住标题菜单"设置"后面的位置。
+            PolarisManagementUI.RegisterButton();
         }
 
-        /// <summary>Polaris 自己的每帧泵：驱动就绪门控、语言变更探测、地图代数推进及能力层回调，供所有下游模组共用。</summary>
         private void Update()
         {
             // 心跳必须是第一行且在 Pump 之外：Pump 里的回调若卡住，这一帧的心跳也要算已打过。
             Diagnostics.DiagnosticsHost.Beat(UnityEngine.Time.frameCount);
 
-            API.GameSessionRuntime.Pump();
-            Drawing.Internal.DrawingRuntime.Update();
-            PolarisAPI.GameMenu.Pump();
-            ComponentHost.Update();
+            Diagnostics.InGameAlert.Update();
+
         }
 
-        /// <summary>所有 Update 跑完之后再泵一次，此时读相机位置、角色坐标等"别人算完的结果"才准。</summary>
-        private void LateUpdate()
+        private void OnGUI()
         {
-            API.GameSessionRuntime.PumpLate();
-            ComponentHost.LateUpdate();
+            Diagnostics.InGameAlert.OnGUI();
         }
 
         /// <summary>窗口失焦/回到前台；失焦时 Unity 不再调 Update，须暂停看门狗以免误报卡死。</summary>
@@ -133,12 +119,6 @@ namespace Polaris
         /// <summary>进程退出前的收尾：落一份"上一局摘要"供下次启动读取，控制台补一行汇总（无错误时不吭声）。</summary>
         private void OnApplicationQuit()
         {
-            // 只清零本地标志，不主动恢复世界：进程都要退出了没必要。
-            API.GameMenuPauseRuntime.Reset();
-            Drawing.Internal.DrawingRuntime.Shutdown();
-
-            ComponentHost.Shutdown();
-
             // 先停看门狗：退出过程还要活一会儿（存档、淡出），不停会把它误判成卡死。
             Diagnostics.DiagnosticsHost.Stop();
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -45,6 +45,9 @@ namespace Polaris.Diagnostics
 
         /// <summary>上报时的上下文（如 "PUI子系统初始化"）；全局兜底抓到的异常没有，为 null。</summary>
         public string Context { get; internal set; }
+
+        /// <summary>严重度阶梯上的级别，由 <see cref="SeverityPolicy"/> 判定。</summary>
+        public ErrorSeverity Severity { get; internal set; }
 
         /// <summary>归因结论。</summary>
         public ErrorVerdict Verdict { get; internal set; }

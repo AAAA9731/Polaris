@@ -1,4 +1,4 @@
-namespace Polaris.Diagnostics
+﻿namespace Polaris.Diagnostics
 {
     /// <summary>上一局是怎么结束的，由 <see cref="SessionSentinel"/> 在启动时判定。</summary>
     public enum SessionEndKind
@@ -21,5 +21,8 @@ namespace Polaris.Diagnostics
         /// 比 <see cref="NotClosed"/> 强得多——这条是有证据的，还带着"卡在谁身上"。
         /// </summary>
         Hung,
+
+        /// <summary>被 Polaris 自己主动结束：严重度判到最高一级（见 <see cref="ErrorSeverity.Critical"/>），哨兵里留有责任方与原因。</summary>
+        Terminated,
     }
 }

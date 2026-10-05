@@ -1,144 +1,92 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 
 namespace Polaris.Diagnostics
 {
-    /// <summary>
-    /// Core 基础诊断与高级诊断模块之间的接线点。两者一起打包发行，视为始终存在；
-    /// 这里只留一个什么都不做、绝不抛异常的空实现，兜住 <c>Plugin.Awake</c> 里
-    /// <c>CoreErrorCapture.Install()</c> 到 PolarisDiagnostics 完成 <see cref="Register"/>
-    /// 之间那一小段时序缺口。
-    /// </summary>
+    /// <summary>诊断子系统的统一入口：直接转发到 <c>Diagnostics/</c> 下的具体实现，没有可替换的后端。须在 <see cref="Install"/> 之后使用。</summary>
     internal static class DiagnosticsHost
     {
-        static IDiagnosticsBackend backend = NullDiagnosticsBackend.Instance;
-        static bool registered;
-
-        internal static void Register(IDiagnosticsBackend implementation)
+        /// <summary>由 <c>Plugin.Awake</c> 在最开始调一次：配置宿主信息，安装主线程心跳、会话哨兵与看门狗。</summary>
+        internal static void Install()
         {
-            if (implementation == null)
-            {
-                throw new ArgumentNullException(nameof(implementation));
-            }
+            DiagnosticsRuntime.Configure(
+                Plugin.Logger,
+                typeof(Plugin).Assembly,
+                MyPluginInfo.PLUGIN_GUID,
+                MyPluginInfo.PLUGIN_NAME,
+                MyPluginInfo.PLUGIN_VERSION,
+                PolarisMeta.ReportTarget,
+                () => XX.TX.getCurrentFamilyName(),
+                () => UserModToggleManager.Scan()
+                    .FindAll(record => !record.Enabled)
+                    .ConvertAll(record => record.DisplayName));
 
-            if (registered)
-            {
-                throw new InvalidOperationException("A diagnostics backend has already been registered.");
-            }
+            MainThreadBeat.Install();
+            DiagnosticsConfig.Resolve();
+            ErrorReportWriter.PrimeEnvironment();
+            PolarisAPI.Errors.Guard(SessionSentinel.Install, "registering this session's sentinel");
+            PolarisAPI.Errors.Guard(AppendPreviousSession, "archiving how the previous session ended");
+            Watchdog.Install();
+            CrashWatcherLauncher.Launch();
+        }
 
-            backend = implementation;
-            registered = true;
+        static void AppendPreviousSession()
+        {
+            if (SessionSentinel.LastSession != null)
+            {
+                ErrorReportWriter.AppendPreviousSession(SessionSentinel.LastSession);
+            }
         }
 
         internal static void Report(Exception exception, string context, Assembly culprit)
-            => backend.Report(exception, context, culprit);
+            => ErrorRegistry.Submit(exception, context, culprit);
 
         internal static void ReportLog(string condition, string stackTrace, string context)
-            => backend.ReportLog(condition, stackTrace, context);
+            => ErrorRegistry.Submit(condition, stackTrace, context);
 
-        internal static void CountLoggedError() => backend.RecordLoggedErrors(1);
-        internal static void RaiseFatal(FatalError fatal) => backend.RaiseFatal(fatal);
-        internal static bool IsFatal => backend.IsFatal;
-        internal static IReadOnlyList<ErrorIncident> Incidents => backend.Incidents;
-        internal static LastSessionInfo LastSession => backend.LastSession;
-        internal static SessionEndKind LastSessionEnd => backend.LastSessionEnd;
-        internal static FatalError FirstFatal => backend.FirstFatal;
-        internal static int OtherFatalCount => backend.OtherFatalCount;
-        internal static string FatalReportPath => backend.FatalReportPath;
-        internal static string LastWrittenReportPath => backend.LastWrittenReportPath;
-        internal static double SecondsSinceLastFrame => backend.SecondsSinceLastFrame;
-        internal static int HangCount => backend.HangCount;
+        internal static void CountLoggedError() => ErrorRegistry.CountLoggedErrors(1);
+        internal static void RaiseFatal(FatalError fatal) => FatalRegistry.Raise(fatal);
+        internal static bool IsFatal => FatalRegistry.Any;
+        internal static IReadOnlyList<ErrorIncident> Incidents => ErrorRegistry.Incidents;
+        internal static LastSessionInfo LastSession => SessionSentinel.LastSession;
+        internal static SessionEndKind LastSessionEnd => SessionSentinel.LastEnd;
+        internal static FatalError FirstFatal => FatalRegistry.First;
+        internal static int OtherFatalCount => FatalRegistry.OtherCount;
+        internal static string FatalReportPath => FatalRegistry.ReportPath;
+        internal static string LastWrittenReportPath => ErrorReportWriter.LastWrittenPath;
+        internal static double SecondsSinceLastFrame => MainThreadBeat.SecondsSinceBeat;
+        internal static int HangCount => Watchdog.HangCount;
 
         internal static event Action<ErrorIncident> IncidentRecorded
         {
-            add => backend.IncidentRecorded += value;
-            remove => backend.IncidentRecorded -= value;
+            add => ErrorRegistry.Recorded += value;
+            remove => ErrorRegistry.Recorded -= value;
         }
 
         internal static event Action<HangReport> HangSuspected
         {
-            add => backend.HangSuspected += value;
-            remove => backend.HangSuspected -= value;
+            add => Watchdog.HangSuspected += value;
+            remove => Watchdog.HangSuspected -= value;
         }
 
         internal static IDisposable ExpectStall(string reason, double seconds)
-            => backend.ExpectStall(reason, seconds);
+            => Watchdog.ExpectStall(reason, seconds);
 
         internal static IDisposable Activity(string what, Assembly owner = null)
-            => backend.Activity(what, owner);
+            => MainThreadBeat.Enter(what, owner);
 
-        internal static void Beat(int frameCount) => backend.Beat(frameCount);
-        internal static void SetPaused(bool paused) => backend.SetPaused(paused);
+        internal static void Beat(int frameCount) => MainThreadBeat.Beat(frameCount);
+        internal static void SetPaused(bool paused) => Watchdog.SetPaused(paused);
+
         internal static void RecordCallbackInvocation(string ownerGuid, string context, double millis)
-            => backend.RecordCallbackInvocation(ownerGuid, context, millis);
+            => CallbackDiagnostics.RecordInvocation(ownerGuid, context, millis);
+
         internal static void RecordCallbackException(string ownerGuid, string context)
-            => backend.RecordCallbackException(ownerGuid, context);
-        internal static void Stop() => backend.Stop();
-        internal static string Summary() => backend.Summary();
-        internal static void CloseSession() => backend.CloseSession();
+            => CallbackDiagnostics.RecordException(ownerGuid, context);
 
-        /// <summary>Register 之前的占位实现：只把异常/致命错误直接记到 BepInEx 日志，不缓冲、不重放。</summary>
-        sealed class NullDiagnosticsBackend : IDiagnosticsBackend
-        {
-            internal static readonly NullDiagnosticsBackend Instance = new();
-            static readonly IDisposable Noop = new NoopDisposable();
-
-            public bool IsFatal => false;
-            public IReadOnlyList<ErrorIncident> Incidents => Array.Empty<ErrorIncident>();
-            public LastSessionInfo LastSession => null;
-            public SessionEndKind LastSessionEnd => SessionEndKind.Clean;
-            public FatalError FirstFatal => null;
-            public int OtherFatalCount => 0;
-            public string FatalReportPath => null;
-            public string LastWrittenReportPath => null;
-            public double SecondsSinceLastFrame => 0d;
-            public int HangCount => 0;
-
-            public event Action<ErrorIncident> IncidentRecorded { add { } remove { } }
-            public event Action<HangReport> HangSuspected { add { } remove { } }
-
-            public void Report(Exception exception, string context, Assembly culprit)
-            {
-                if (exception != null)
-                {
-                    Plugin.Logger?.LogError($"[PolarisCore] {context ?? "captured exception"}: {exception}");
-                }
-            }
-
-            public void ReportLog(string condition, string stackTrace, string context)
-            {
-                if (!string.IsNullOrEmpty(condition))
-                {
-                    Plugin.Logger?.LogError($"[PolarisCore] {context ?? "captured error"}: {condition}\n{stackTrace}");
-                }
-            }
-
-            public void RecordLoggedErrors(long count) { }
-
-            public void RaiseFatal(FatalError fatal)
-            {
-                if (fatal != null)
-                {
-                    Plugin.Logger?.LogError(
-                        $"[PolarisCore] Fatal error reported by {fatal.Source}: {fatal.Reason?.ForReport}");
-                }
-            }
-
-            public IDisposable ExpectStall(string reason, double seconds) => Noop;
-            public IDisposable Activity(string what, Assembly owner) => Noop;
-            public void Beat(int frameCount) { }
-            public void SetPaused(bool paused) { }
-            public void RecordCallbackInvocation(string ownerGuid, string context, double millis) { }
-            public void RecordCallbackException(string ownerGuid, string context) { }
-            public void Stop() { }
-            public string Summary() => null;
-            public void CloseSession() { }
-
-            sealed class NoopDisposable : IDisposable
-            {
-                public void Dispose() { }
-            }
-        }
+        internal static void Stop() => Watchdog.Uninstall();
+        internal static string Summary() => ErrorRegistry.Summary();
+        internal static void CloseSession() => SessionSentinel.Close();
     }
 }

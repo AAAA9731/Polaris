@@ -1,3 +1,4 @@
+﻿using XX;
 using System;
 using System.Collections.Generic;
 
@@ -138,7 +139,7 @@ namespace Polaris.Localization
             {
                 try
                 {
-                    return PolarisAPI.Game.Localization.CurrentLocale;
+                    return TX.getCurrentFamilyName();
                 }
                 catch (Exception)
                 {

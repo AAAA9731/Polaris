@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Polaris.Diagnostics
@@ -32,6 +32,12 @@ namespace Polaris.Diagnostics
         /// <summary>判定卡死时主线程已停了多少秒；非 <see cref="SessionEndKind.Hung"/> 时为 0。</summary>
         public double StallSeconds { get; internal set; }
 
+        /// <summary>被 Polaris 主动结束时的责任方（模组名）；其它情况为 null。</summary>
+        public string FatalCulprit { get; internal set; }
+
+        /// <summary>被 Polaris 主动结束时的原因；其它情况为 null。</summary>
+        public string FatalReason { get; internal set; }
+
         /// <summary>上一局的报告文件路径；上一局没写出过报告为 null。</summary>
         public string ReportPath { get; internal set; }
 
@@ -61,6 +67,9 @@ namespace Polaris.Diagnostics
             {
                 case SessionEndKind.Hung:
                     return $"The previous session probably hung: the main thread stopped advancing for about {StallSeconds:0}s{when}.";
+
+                case SessionEndKind.Terminated:
+                    return $"The previous session was ended by Polaris: {FatalReason}{when}.";
 
                 case SessionEndKind.NotClosed:
                     return $"The previous session did not exit cleanly{when}.";

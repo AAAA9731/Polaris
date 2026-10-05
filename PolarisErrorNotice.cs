@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using nel;
@@ -58,7 +58,7 @@ namespace Polaris
         /// <summary>进程启动时调用：上一局非正常结束时补一次它没机会做的 <see cref="PersistPending"/>；正常退出或首次运行时 <paramref name="last"/> 为 null，什么都不做。</summary>
         internal static void AdoptLastSession(LastSessionInfo last)
         {
-            if (last == null || last.Kind != SessionEndKind.Hung && last.Kind != SessionEndKind.NotClosed)
+            if (last == null || last.Kind != SessionEndKind.Hung && last.Kind != SessionEndKind.NotClosed && last.Kind != SessionEndKind.Terminated)
             {
                 return;
             }
@@ -101,12 +101,6 @@ namespace Polaris
             get
             {
                 if (sessionAcknowledged || buildFailed)
-                {
-                    return false;
-                }
-
-                // 玩家关掉的是"弹这一页"，不是"记录错误"：待读状态仍留在配置里，不会被这次关闭吞掉。
-                if (!Settings.PolarisSettings.ShowErrorNotice)
                 {
                     return false;
                 }

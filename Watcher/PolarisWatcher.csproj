@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 崩溃观察者：由 Polaris 插件在游戏启动时拉起，游戏异常退出后弹窗说明原因。
+       刻意用 .NET Framework 4.8（Windows 10/11 自带），单个小 exe，玩家无需另装运行库。 -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>PolarisWatcher</AssemblyName>
+    <RootNamespace>Polaris.Watcher</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Version>2.0.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

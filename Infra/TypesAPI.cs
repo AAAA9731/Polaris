@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -67,7 +67,7 @@ namespace Polaris.Infra
         public IEnumerable<Type> InModules()
         {
             foreach (Assembly assembly in PolarisAPI.Modules.PluginAssemblies
-                         .Concat(PolarisAPI.Modules.ComponentAssemblies)
+                         .Append(typeof(TypesAPI).Assembly)
                          .Distinct())
             {
                 foreach (Type type in Of(assembly))

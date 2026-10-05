@@ -5,14 +5,6 @@
         /// <summary>主菜单按钮相关 API。</summary>
         public static MainMenuAPI MainMenu { get; } = new();
 
-        /// <summary>游戏内 ESC 菜单分类扩展，以及菜单本身的打开/关闭与世界暂停策略控制。</summary>
-        public static GameMenuAPI GameMenu { get; } = new();
-
-        /// <summary>设置项相关 API：声明的设置项会渲染进原版设置界面并自动持久化。</summary>
-        public static Settings.SettingsAPI Settings { get; } = new();
-
-        // 游戏能力层入口 PolarisAPI.Game 是一个嵌套静态类，定义在 Api/Game/PolarisGameAPI.cs。
-
         /// <summary>本地化 resolver 注册表：注册 key→文案回调，供原版 <c>TX.Get</c> 优先采用。</summary>
         public static Localization.LocalizationAPI Localization { get; } = new();
 

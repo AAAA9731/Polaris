@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -11,6 +11,12 @@
     <LangVersion>latest</LangVersion>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 崩溃观察者是独立的 net48 程序，不能被 Core 的 **/*.cs 通配吃进去。 -->
+    <Compile Remove="Watcher\**" />
+    <None Remove="Watcher\**" />
+  </ItemGroup>
 
   <Import Project="build\Polaris.Runtime.props" />
 

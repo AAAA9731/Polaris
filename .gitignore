@@ -370,3 +370,6 @@ Directory.Build.props.user
 .codex/
 .codex-work/
 .agents/
+
+# 本机游戏路径
+aic_path.txt
