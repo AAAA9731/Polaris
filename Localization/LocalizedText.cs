@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace Polaris.Localization
 {
     /// <summary>
-    /// 一条内置文案：兜底中性文本 + 若干语言覆盖，供不便用 <c>.plang</c> 的场合（如启动早期即需可查的文案）使用。
-    /// 语言代码建议对齐 <c>PolarisAPI.Game.CurrentLocale</c>，大小写不敏感；取值规则见 <see cref="Pick"/>。
+    /// 一条文案：兜底中性文本 + 若干语言覆盖。
+    /// 语言代码建议对齐 <c>PolarisAPI.Game.Localization.CurrentLocale</c>，大小写不敏感；取值规则见 <see cref="Pick"/>。
     /// </summary>
     public sealed class LocalizedText
     {

@@ -25,6 +25,7 @@
   <ItemGroup>
     <!-- 只有 Core 生成 BepInEx 插件元数据；组件项目不得生成插件入口信息。 -->
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+    <PackageReference Include="NVorbis" Version="0.10.*" />
   </ItemGroup>
 
 </Project>

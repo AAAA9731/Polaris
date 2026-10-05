@@ -63,7 +63,7 @@
 
 构建、CI、发布流程和目录结构见 [doc/DEVELOPING.md](doc/DEVELOPING.md)。
 
-Polaris 之前提供过一整套游戏 API 库，现在已经拆出去另做；完整的旧代码保留在 `legacy` 分支和 `pre-slim-v2.0.0` 标签里。
+本功能分支把少量常用游戏入口、资源加载与存档容器编解码合并到当前 Core，文案、菜单与设置复用现有 API。具体保留范围、固定旧版基线与 30i 验证见 [精简审核说明](doc/CORE-LIB-REVIEW.md)。完整旧 Core 仍保留在 `legacy` 分支和 `pre-slim-v2.0.0` 标签里。
 
 ## 许可
 

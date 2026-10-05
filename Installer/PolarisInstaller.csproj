@@ -28,7 +28,7 @@
     <Resource Include="..\polaris_icon.png" Link="logo.png" />
   </ItemGroup>
 
-  <!-- 随安装器分发的文件，嵌入 exe：BepInEx 6 (Mono) 与 Polaris 自己的三个文件。 -->
+  <!-- 随安装器分发的文件，嵌入 exe：BepInEx 6 (Mono)、Polaris 及运行依赖。 -->
   <ItemGroup>
     <EmbeddedResource Include="Payload\game\**" LogicalName="game/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
@@ -43,6 +43,8 @@
   <Target Name="EmbedPolarisFiles" AfterTargets="BuildPolarisFiles" BeforeTargets="PrepareForBuild;AssignTargetPaths">
     <ItemGroup>
       <EmbeddedResource Include="..\bin\$(Configuration)\netstandard2.1\PolarisCore.dll" LogicalName="polaris/PolarisCore.dll" />
+      <_PolarisSupportFile Include="..\bin\$(Configuration)\netstandard2.1\*.dll;..\doc\licenses\*.txt" Exclude="..\bin\$(Configuration)\netstandard2.1\PolarisCore.dll" />
+      <EmbeddedResource Include="@(_PolarisSupportFile)" LogicalName="polaris/%(_PolarisSupportFile.Filename)%(_PolarisSupportFile.Extension)" />
       <EmbeddedResource Include="..\Watcher\bin\$(Configuration)\net48\PolarisWatcher.exe" LogicalName="polaris/PolarisWatcher.exe" />
       <EmbeddedResource Include="..\polaris_icon.png" LogicalName="polaris/polaris_icon.png" />
       <EmbeddedResource Include="..\polaris_star.png" LogicalName="polaris/polaris_star.png" />

@@ -6,7 +6,7 @@
 
 | 部分 | 位置 | 作用 |
 |---|---|---|
-| PolarisCore（BepInEx 插件） | 仓库根目录 | 游戏内：错误捕获与归因、阶梯式提示、标题画面的模组管理页、自动更新 |
+| PolarisCore（BepInEx 插件） | 仓库根目录 | 游戏内：管理、诊断、自动更新，以及本功能分支合并的少量游戏／资源／存档 API |
 | PolarisWatcher（独立小程序，.NET Framework 4.8） | `Watcher/` | 游戏退出后：弹出崩溃原因窗口、应用已下载的更新 |
 | PolarisInstaller（WPF 单文件安装器） | `Installer/` | 安装、更新、卸载 BepInEx 与 Polaris；嵌入了 BepInEx 文件和刚构建好的插件与 Watcher |
 
@@ -16,6 +16,9 @@
 Diagnostics/     诊断：捕获、归因、看门狗、会话哨兵、严重度策略、游戏内提示、模组标记
 SelfUpdate/      游戏内自动更新
 Contracts/       诊断的公开数据类型
+Api/             少量游戏入口（直接使用游戏原版类型）
+Resources/       固定目录的图片、WAV/OGG、PXLS 加载与释放
+Save/            原有尾部容器的字节编解码；无自动存档挂接或强类型平台
 Infra/           错误、健康、路径等基础设施
 Settings/        设置项框架：给静态字段标 `[PolarisSetting]` 即可渲染进原版设置界面并自动保存；`PolarisSettings.cs` 是 Polaris 自己的设置项
 Patch/           标题画面补丁（模组管理页入口、告知页）与设置界面（UiCFG）补丁
@@ -90,10 +93,8 @@ PolarisInstaller.exe --silent install|uninstall --game "<游戏目录>" [--remov
 
 ## 设置界面的 Polaris 标签页
 
-原版设置界面的标签页由 `UiCFG.CATEG` 枚举写死，没有扩展口。Polaris 借用了其中平时为空、被整页隐藏的 `effects_sp`（特殊效果）分类：没有条目时塞一个占位条目让原版建出这一页，再接管这一页的绘制。标签图标用字体里有字形的 ✴，页眉标题改为“Polaris 设置”。实现见 `Patch/Patch_UiCFG_PolarisTab.cs`。
-
-如果玩家恰好解锁了原版的特殊项，这一页已经有原版内容，Polaris 就不接管，而是把设置项追加在那些内容后面。
+在 ver030i 中，现有补丁将 `UiCFG` 构造函数的标签页数量从 7 改为 8，以 `CATEG._MAX` 建出第八页，再填入 Polaris 和模组的设置项。标签图标是 ✴，页眉标题是“Polaris 设置”。实现见 `Patch/Patch_UiCFG_PolarisTab.cs`；本次合并沿用这套实现。构造函数的 IL 匹配未成功时，设置项回退到“常规”页尾部。
 
 ## 旧代码
 
-原先的整套库功能（Game、Drawing、Settings、Content 等 API）已经拆出去，不在 `main` 里。完整代码保留在 `legacy` 分支和 `pre-slim-v2.0.0` 标签；当时的设计文档放在 `doc/legacy/`。
+`main` 保持原管理与诊断版本，本次合并在 `feat/core-library-slim-030i` 中审核。当前 Core 基线和 GitHub 聚合框架基线都有独立本地分支，来源与具体差异见 [CORE-LIB-REVIEW.md](CORE-LIB-REVIEW.md)。完整旧 Core 保留在 `legacy` 分支和 `pre-slim-v2.0.0` 标签；当时的设计文档放在 `doc/legacy/`。

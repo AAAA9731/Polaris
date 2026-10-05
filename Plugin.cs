@@ -87,7 +87,7 @@ namespace Polaris
             Logger.LogMessage($"[Polaris] Applied {applied} Harmony patches.");
         }
 
-        /// <summary>Polaris 自己的每帧泵：驱动就绪门控、语言变更探测、地图代数推进及能力层回调，供所有下游模组共用。</summary>
+        /// <summary>注册设置与管理入口，启动更新检查。</summary>
         private void Start()
         {
             // 先扫描设置项（读出玩家存的值），再启动依赖这些值的功能。
@@ -102,9 +102,11 @@ namespace Polaris
 
         private void Update()
         {
-            // 心跳必须是第一行且在 Pump 之外：Pump 里的回调若卡住，这一帧的心跳也要算已打过。
+            // 心跳必须先于资源加载推进：加载或回调若卡住，这一帧的心跳也要算已打过。
             Diagnostics.DiagnosticsHost.Beat(UnityEngine.Time.frameCount);
 
+            Res.Runtime.MainThreadDispatcher.Drain();
+            Res.Runtime.PxlsPump.Advance();
             Diagnostics.InGameAlert.Update();
 
         }

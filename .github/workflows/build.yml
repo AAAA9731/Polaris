@@ -123,6 +123,8 @@ jobs:
           $stage = "stage/BepInEx/plugins"
           New-Item -ItemType Directory -Force "$stage/Polaris" | Out-Null
           Copy-Item bin/Release/netstandard2.1/PolarisCore.dll $stage/
+          Get-ChildItem bin/Release/netstandard2.1/*.dll | Where-Object Name -ne 'PolarisCore.dll' | Copy-Item -Destination "$stage/Polaris/"
+          Copy-Item doc/licenses/*.txt "$stage/Polaris/"
           Copy-Item Watcher/bin/Release/net48/PolarisWatcher.exe "$stage/Polaris/"
           Copy-Item polaris_icon.png "$stage/Polaris/"
           Copy-Item polaris_star.png "$stage/Polaris/"
