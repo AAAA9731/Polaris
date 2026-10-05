@@ -5,7 +5,7 @@
     <AssemblyName>PolarisCore</AssemblyName>
     <RootNamespace>Polaris</RootNamespace>
     <Product>AIC-Polaris</Product>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <BepInExPluginGuid>Polaris</BepInExPluginGuid>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>

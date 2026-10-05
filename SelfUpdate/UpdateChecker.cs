@@ -114,15 +114,7 @@ namespace Polaris.SelfUpdate
 
         static void Offer(Release release)
         {
-            string notes = release.Notes;
-            if (!string.IsNullOrEmpty(notes))
-            {
-                notes = notes.Trim();
-                if (notes.Length > 220)
-                {
-                    notes = notes.Substring(0, 220) + "…";
-                }
-            }
+            string notes = CleanNotes(release.Notes);
 
             var item = new InGameAlert.Item
             {
@@ -139,6 +131,50 @@ namespace Polaris.SelfUpdate
             };
 
             InGameAlert.ShowNotice(item);
+        }
+
+        /// <summary>
+        /// 把 GitHub 自动生成的 Markdown 发布说明整理成适合弹窗的几行纯文本：去掉标题井号、加粗/代码标记、
+        /// "Full Changelog" 之类的链接行，最多留 5 行、220 个字符。
+        /// </summary>
+        internal static string CleanNotes(string markdown)
+        {
+            if (string.IsNullOrWhiteSpace(markdown))
+            {
+                return "";
+            }
+
+            var lines = new List<string>();
+            foreach (string raw in markdown.Replace("\r", "").Split('\n'))
+            {
+                string line = raw.Trim();
+                if (line.Length == 0
+                    || line.StartsWith("**Full Changelog**", StringComparison.OrdinalIgnoreCase)
+                    || line.StartsWith("<!--", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                line = line.TrimStart('#', ' ');
+                if (line.StartsWith("* ", StringComparison.Ordinal))
+                {
+                    line = "- " + line.Substring(2);
+                }
+
+                line = line.Replace("**", "").Replace("`", "");
+                if (line.Length > 0)
+                {
+                    lines.Add(line);
+                }
+
+                if (lines.Count >= 5)
+                {
+                    break;
+                }
+            }
+
+            string text = string.Join("\n", lines);
+            return text.Length > 220 ? text.Substring(0, 220) + "…" : text;
         }
 
         static void StartDownload(InGameAlert.Item item, Release release)
