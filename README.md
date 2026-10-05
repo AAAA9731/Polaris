@@ -1,79 +1,67 @@
 ﻿# Polaris
 
-《Alice in Cradle》的 **模组管理器 + 诊断工具**，由三部分组成：
+《Alice in Cradle》的模组管理与诊断工具。
 
-| 部分 | 位置 | 作用 |
+装好之后，它会替你盯着游戏：哪个模组出了错、错到什么程度，在游戏里就能直接看到；游戏崩了，会弹窗告诉你是为什么；有新版本，会提醒你并帮你更新。
+
+[English](README.en.md)
+
+## 它能做什么
+
+**一键安装。** 双击安装器，选好游戏，点一下“安装”，BepInEx 和 Polaris 就一起装好了，不用手动复制文件。
+
+**模组管理。** 在游戏标题画面的“Polaris”页里勾选启用或禁用模组，重启游戏后生效。
+
+**阶梯式错误诊断。** 小错误在后台悄悄记录，严重到影响游戏时才会打断你：
+
+| 级别 | 什么时候 | 你会看到 |
 |---|---|---|
-| **PolarisCore**（BepInEx 插件） | 仓库根目录 | 游戏内：捕获并追踪错误、阶梯式提示、标题画面的模组管理页 |
-| **PolarisWatcher**（独立小程序） | `Watcher/` | 游戏异常退出后弹窗，说明是什么原因、哪个模组 |
-| **PolarisInstaller**（图形安装器） | `Installer/` | 双击安装/更新/卸载 BepInEx + Polaris |
+| 轻微 | 某个模组第一次出错 | 右上角一条小提示，点开能看详情 |
+| 持续 | 同一个错误反复出现，或同一个模组出了很多种错误 | 一个提示框，可以一键禁用这个模组（重启生效） |
+| 严重 | 错误持续太久、好几个模组同时出错、游戏卡死太久、Polaris 自身的补丁失效、内存耗尽 | 全屏提示，倒计时后自动退出游戏 |
 
-库功能（Game / Drawing / Settings / Content 等 API）已不在 main 中，完整代码保留在 `legacy` 分支与 `pre-slim-v2.0.0` 标签。
+原版游戏自己的错误不会打扰你。出过持续或严重问题的模组，会在模组管理页里被标记出来；如果之后这个模组的文件更新了，标记会变成一次“可能已修复”的提示。
 
-## 玩家：怎么用
+**崩溃窗口。** 游戏意外退出时，会弹出一个窗口，写明可能的原因：退出码、系统记录的故障模块、崩溃前的错误，以及最可疑的模组。
 
-运行 `PolarisInstaller.exe`（单个文件，无需另装 .NET）→ 点“浏览…”选择游戏的 `AliceInCradle.exe`（或把它/游戏文件夹拖进窗口；把安装器放进游戏目录运行则自动识别）→ 点“安装”。
-模组的启用/禁用在游戏内标题画面的 Polaris 页里操作。
+**自动更新。** 游戏启动后，Polaris 会检查有没有新版本。有的话会在游戏里问你，点“更新”才会下载；文件在你退出游戏后自动替换，不会打断当前这局。
 
-## 诊断：阶梯式处置
+## 安装
 
-| 级别 | 触发 | 玩家看到 |
-|---|---|---|
-| 0 | 原版自身的错误 | 无，只计数 |
-| 1 轻微 | 模组相关错误首次出现 | 右上角小提示，点开看详情 |
-| 2 持续 | 同类错误每帧反复、或同一模组触发多种错误 | 提示框，可一键禁用该模组（重启生效） |
-| 3 严重 | 风暴持续过久 / 多个模组同时风暴 / 卡死过久 / Polaris 核心补丁失效 / 内存耗尽 | 全屏提示后主动退出，Watcher 窗口点名责任方 |
+需要 Windows 和一份《Alice in Cradle》。
 
-所有阈值在 `BepInEx/config/Polaris/_polaris_diagnostics.cfg`；报告写在 `BepInEx/Polaris/reports/`（每局一个文件，最多保留 20 份）。
+1. 到 [Releases](https://github.com/AAAA9731/PolarisCore/releases) 下载 `PolarisInstaller.exe`（单个文件，不需要另装 .NET）。
+2. 运行它，点“浏览…”，选中游戏的 `AliceInCradle.exe`。也可以把 `AliceInCradle.exe` 或游戏文件夹直接拖进窗口；如果把安装器放进游戏文件夹里运行，它会自动认出来。
+3. 点“安装”。
 
-## CI / 发布（GitHub Actions）
+安装器会先备份被替换的原文件，已经装好的 BepInEx 默认不会动。
 
-| 工作流 | 触发 | 做什么 |
-|---|---|---|
-| `ci.yml` | 推送到 main / refactor/ feat/ fix/ 分支、所有 PR | 构建 PolarisWatcher；有游戏程序集时再构建插件、发布安装器并跑安装器冒烟测试，产物上传为 artifact |
-| `release.yml` | 推送 `v*` 标签 | 同上（必须有游戏程序集），核对标签与 `<Version>` 一致后创建 GitHub Release，附 `PolarisInstaller.exe`、`.sha256`、`PolarisCore-manual.zip` |
+## 更新
 
-编译插件需要游戏的程序集（版权文件，不能进本仓库）。做法：
+一般不用操作：游戏里收到提示后点“更新”即可。也可以随时重新运行最新版的安装器。
 
-1. 运行 `tools/pack-managed.ps1 -GameDir "<游戏目录>"` 得到 `aic-managed.zip`（约 4 MB，只含 6 个原样复制的 dll，未做任何改动）。
-2. 放进一个**私有**仓库（目前是维护者个人名下的 `AAAA9731/aic-managed-refs`，文件名 `aic-managed.zip`）。**不要公开。**
-3. 给这个私有仓库加一个**只读 deploy key**，私钥存为本仓库的 Actions 密钥 `AIC_MANAGED_KEY`。CI 用它拉取私有仓库，不需要个人访问令牌。
+## 卸载
 
-没有 `AIC_MANAGED_KEY`（例如来自 fork 的 PR）时，CI 只构建不依赖游戏的 PolarisWatcher，插件与安装器步骤会被跳过并给出提示。游戏更新后把新的 zip 提交进私有仓库即可。
+运行安装器，选好游戏目录，点“卸载”。只会删除 Polaris 自己的文件，并还原被备份的原文件；你的其他模组不会被碰。如果确定不再需要 BepInEx，可以勾选“同时卸载 BepInEx”。
 
-发布一个版本：改 `PolarisCore.csproj` 的 `<Version>` → 提交 → `git tag v2.0.1 && git push origin v2.0.1`。
+## 常见问题
 
-## 游戏内自动更新
+**Windows 提示“已保护你的电脑”？** 安装器没有做代码签名，Windows 可能会弹出 SmartScreen 提示。可以点“更多信息”再选“仍要运行”。校验值在每个 Release 里都有（`PolarisInstaller.exe.sha256`），可以自行核对。
 
-游戏启动后约 12 秒，Polaris 会在后台查一次本仓库 GitHub 上最新的 Release（默认每 12 小时最多一次）。有新版本时游戏内弹窗，玩家可以选“更新 / 跳过此版本 / 以后再说”：
+**报告和日志在哪？** 错误报告在游戏目录的 `BepInEx/Polaris/reports/`，每局游戏一个文件，最多保留最近 20 份；BepInEx 日志在 `BepInEx/LogOutput.log`。
 
-- 点“更新”才会下载：先取 `PolarisCore-manual.zip.sha256`，再取 `PolarisCore-manual.zip`，核对 SHA256 一致后解到 `BepInEx/Polaris/update/staging`。
-- 文件不会在游戏运行时被替换（运行中的 dll 无法覆盖）。玩家退出游戏后，`PolarisWatcher.exe` 把新文件换到位，被换掉的旧文件备份在 `BepInEx/Polaris/update/backup`；下次启动游戏会提示“已更新到 vX”。
-- 只信任配置里指定的仓库、只走 HTTPS、只接受 `BepInEx/plugins/` 下的文件。玩家不确认就什么都不会下载。
-- 配置在 `BepInEx/config/Polaris/_polaris_update.cfg`：`CheckForUpdates`（总开关）、`CheckIntervalHours`、`Repository`。
+**怎么关掉更新检查？** 编辑 `BepInEx/config/Polaris/_polaris_update.cfg`，把 `CheckForUpdates` 改成 `false`。
 
-因此发布新版本只需：改 `<Version>` → 提交 → 打标签（见上文）。Release 里的 `PolarisCore-manual.zip` 与它的 `.sha256` 由 CI 自动附上。
+**游戏更新之后 Polaris 不能用了？** Polaris 是针对特定游戏版本编译的（目前是 ver030i）。游戏大版本更新后，可能需要等 Polaris 出新版本；如果它的核心补丁失效，会直接提示并退出，不会带着错误继续运行。
 
-## 开发者：构建
+**不想要某个提示框了？** 提示的阈值都可以在 `BepInEx/config/Polaris/_polaris_diagnostics.cfg` 里调整，也可以把 `[Severity]` 里的 `ToastEnabled` 设为 `false` 关掉游戏内弹窗（错误报告仍然会写）。
 
-1. 在仓库**上一级目录**创建 `aic_path.txt`，单行写游戏根目录（含 `AliceInCradle_Data` 的那一层）。
-2. 构建插件：`dotnet build PolarisCore.csproj`
-3. 构建崩溃观察者：`dotnet build Watcher/PolarisWatcher.csproj`
-4. 发布安装器：`Installer/publish.ps1`（会先构建上面两项并嵌入，产物为 `Installer/publish/PolarisInstaller.exe`）
+## 面向开发者
 
-安装器支持无界面模式：`PolarisInstaller.exe --silent install|uninstall --game "<路径>" [--remove-bepinex]`，结果写入 `polaris-installer.log`。
+构建、CI、发布流程和目录结构见 [doc/DEVELOPING.md](doc/DEVELOPING.md)。
 
-## 目录
+Polaris 之前提供过一整套游戏 API 库，现在已经拆出去另做；完整的旧代码保留在 `legacy` 分支和 `pre-slim-v2.0.0` 标签里。
 
-```
-Diagnostics/     诊断：捕获、归因、看门狗、会话哨兵、严重度策略、游戏内提示
-Contracts/       诊断的公开数据类型
-Infra/           错误/健康/路径等基础设施
-Patch/           标题画面补丁（模组管理页入口、告知页）
-Localization/    内置三语文案
-Watcher/         PolarisWatcher.exe（崩溃窗口）
-Installer/       PolarisInstaller（WPF 单文件安装器，Payload/ 为随包的 BepInEx 文件）
-doc/legacy/      旧库的规格与设计文档
-```
+## 许可
 
-第三方组件与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+LGPL-2.1，见 [LICENSE.txt](LICENSE.txt)。第三方组件见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
