@@ -30,7 +30,7 @@ The vanilla game's own errors won't bother you. Mods that have had persistent or
 
 Requires Windows and a copy of Alice in Cradle.
 
-1. Go to [Releases](https://github.com/AAAA9731/PolarisCore/releases) and download `PolarisInstaller.exe` (a single file, no separate .NET install needed).
+1. Go to [Releases](https://github.com/AAAA9731/Polaris/releases) and download `PolarisInstaller.exe` (a single file, no separate .NET install needed).
 2. Run it, click "Browse…", and select the game's `AliceInCradle.exe`. You can also drag `AliceInCradle.exe` or the game folder straight into the window; if you run the installer from inside the game folder, it will detect it automatically.
 3. Click "Install".
 

@@ -30,7 +30,7 @@
 
 需要 Windows 和一份《Alice in Cradle》。
 
-1. 到 [Releases](https://github.com/AAAA9731/PolarisCore/releases) 下载 `PolarisInstaller.exe`（单个文件，不需要另装 .NET）。
+1. 到 [Releases](https://github.com/AAAA9731/Polaris/releases) 下载 `PolarisInstaller.exe`（单个文件，不需要另装 .NET）。
 2. 运行它，点“浏览…”，选中游戏的 `AliceInCradle.exe`。也可以把 `AliceInCradle.exe` 或游戏文件夹直接拖进窗口；如果把安装器放进游戏文件夹里运行，它会自动认出来。
 3. 点“安装”。
 

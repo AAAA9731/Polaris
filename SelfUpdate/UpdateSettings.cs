@@ -37,7 +37,7 @@ namespace Polaris.SelfUpdate
                 intervalHours = file.Bind("Update", "CheckIntervalHours", 12f,
                     "Minimum hours between two update checks.");
 
-                repository = file.Bind("Update", "Repository", "AAAA9731/PolarisCore",
+                repository = file.Bind("Update", "Repository", "AAAA9731/Polaris",
                     "GitHub repository (owner/name) whose latest release is checked.");
 
                 apiBase = file.Bind("Update", "ApiBase", "https://api.github.com",
@@ -54,7 +54,7 @@ namespace Polaris.SelfUpdate
 
         internal static bool Enabled => enabled?.Value ?? true;
         internal static float IntervalHours => Math.Max(0.1f, intervalHours?.Value ?? 12f);
-        internal static string Repository => string.IsNullOrWhiteSpace(repository?.Value) ? "AAAA9731/PolarisCore" : repository.Value.Trim();
+        internal static string Repository => string.IsNullOrWhiteSpace(repository?.Value) ? "AAAA9731/Polaris" : repository.Value.Trim();
         internal static string ApiBase => (string.IsNullOrWhiteSpace(apiBase?.Value) ? "https://api.github.com" : apiBase.Value.Trim()).TrimEnd('/');
     }
 }
