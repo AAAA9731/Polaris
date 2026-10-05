@@ -1,69 +1,56 @@
-﻿# Polaris
+﻿## Polaris
 
-A mod management and diagnostics tool for Alice in Cradle.
+A mod management and diagnostics tool for *Alice in Cradle*.
 
-Once installed, it keeps an eye on the game for you: which mod went wrong and how badly, right inside the game; if the game crashes, a popup tells you why; when a new version is out, it lets you know and helps you update.
+Once installed, a “Polaris” mod management page will appear in the title menu. It provides third-party mod management with a near-native UI
+as well as basic game diagnostics: it identifies which mod is causing an issue and logs the information.
 
-[简体中文](README.md)
+[English](README.en.md)
 
-## What it can do
+## What It Does
 
-**One-click install.** Double-click the installer, pick your game, and click "Install" — BepInEx and Polaris are installed together, with no manual file copying.
+**One-click installation.** Double-click the installer, select the game, and click “Install.” BepInEx and Polaris will be installed together—no need to manually copy files.
 
-**Mod management.** Tick mods to enable or disable them on the "Polaris" page of the title screen; changes take effect after restarting the game.
+**Mod management.** On the “Polaris” page of the game’s title screen, check the boxes to enable or disable mods; changes take effect after restarting the game.
 
-**Tiered error diagnostics.** Minor errors are quietly logged in the background; you're only interrupted when they're serious enough to affect the game:
+**Tiered error diagnosis.** Minor errors are logged in the background; if an error is severe enough to affect gameplay, the game will exit:
 
-| Level | When | What you'll see |
+| Level | When | What you’ll see |
 |---|---|---|
-| Minor | A mod errors for the first time | A small toast in the top-right corner; click to see details |
-| Persistent | The same error keeps recurring, or one mod produces many different errors | A dialog that lets you disable that mod with one click (takes effect after restart) |
-| Severe | An error lasts too long, several mods fail at once, the game freezes too long, Polaris's own patches fail, or memory runs out | A full-screen notice, then the game exits automatically after a countdown |
+| Minor | First error from a mod | A small提示 in the top-right corner; click to view details |
+| Persistent | The same error occurs repeatedly, or the same mod produces multiple types of errors | A dialog box allowing you to disable the mod with one click (changes take effect after restarting) |
+| Severe | Errors persist for too long, multiple mods fail simultaneously, the game freezes for an extended period, Polaris’s own patch fails, or memory is exhausted | A full-screen alert; the game automatically exits after a countdown |
 
-The vanilla game's own errors won't bother you. Mods that have had persistent or severe issues are flagged on the mod management page; if that mod's files are updated later, the flag turns into a one-time "possibly fixed" notice.
+Mods that have caused persistent or severe issues will be flagged on the Mod Management page; if the mod’s files are updated later, the flag will change to a “Possibly Fixed” notification.
 
-**Crash window.** When the game exits unexpectedly, a window pops up explaining the likely cause: the exit code, the faulting module recorded by the system, errors before the crash, and the most suspicious mod.
+**Crash Window.** When the game exits unexpectedly, a window pops up listing the possible causes: exit code, system-logged faulty modules, errors prior to the crash, and the most likely culprit mod.
 
-**Settings.** In the game's Settings screen (the last tab, marked with an eight-pointed star ✴) you can adjust: the title-screen version line, the previous-session error notice, in-game error alerts (on/off, minimum level, how long they stay, which screen corner), automatic update checks, and whether the game exits automatically on a severe error.
+**Settings. ** In the game’s “Settings” menu (last tab), you can adjust: the version line on the title screen, the error notification page for the previous game, in-game error prompts (on/off, minimum severity level, display duration, and which corner of the screen they appear in), automatic update checks, and whether to automatically exit the game in case of a critical error.
 
-**Automatic updates.** After the game starts, Polaris checks for a new version. If there is one, it asks you in-game, and the download only starts once you click "Update"; files are replaced automatically after you quit the game, so your current session isn't interrupted.
+**Automatic Updates.** After the game launches, Polaris checks for new versions. If available, the game will prompt you; clicking “Update” will initiate the download; The files will be automatically replaced after you exit the game, without interrupting your current game session.
 
 ## Installation
 
-Requires Windows and a copy of Alice in Cradle.
+Requires Windows and a copy of *Alice in Cradle*.
 
-1. Go to [Releases](https://github.com/AAAA9731/Polaris/releases) and download `PolarisInstaller.exe` (a single file, no separate .NET install needed).
-2. Run it, click "Browse…", and select the game's `AliceInCradle.exe`. You can also drag `AliceInCradle.exe` or the game folder straight into the window; if you run the installer from inside the game folder, it will detect it automatically.
-3. Click "Install".
+1. Go to [Releases](https://github.com/AAAA9731/Polaris/releases) to download `PolarisInstaller.exe` (a single file; no separate .NET installation required).
+2. Run it, click “Browse…”, and select the game’s `AliceInCradle.exe`. You can also drag `AliceInCradle.exe` or the game folder directly into the window; if you run the installer from within the game folder, it will be automatically detected.
+3. Click “Install.”
 
-The installer backs up the original files it replaces first, and by default it leaves an existing BepInEx installation alone.
+The installer will first back up the original files to be replaced; an already installed BepInEx will not be modified by default.
 
-## Updating
+## Updates
 
-Usually there's nothing to do: just click "Update" when prompted in-game. You can also rerun the latest installer at any time.
+Generally, no action is required: simply click “Update” when prompted in the game. You can also rerun the latest version of the installer at any time.
 
-## Uninstalling
+## Uninstall
 
-Run the installer, select the game folder, and click "Uninstall". It only removes Polaris's own files and restores the backed-up originals; your other mods are left untouched. If you're sure you no longer need BepInEx, tick "Also uninstall BepInEx".
+Run the installer, select the game directory, and click “Uninstall.” Only Polaris’s own files will be deleted, and the backed-up original files will be restored; your other mods will remain untouched. If you’re certain you no longer need BepInEx, you can check the box labeled “Uninstall BepInEx as well.”
 
-## FAQ
+## Frequently Asked Questions
 
-**Windows says "Windows protected your PC"?** The installer isn't code-signed, so Windows may show a SmartScreen warning. Click "More info" and then "Run anyway". A checksum is included with every Release (`PolarisInstaller.exe.sha256`) if you'd like to verify it yourself.
+**Windows says “Your computer is protected”?** The installer is not code-signed, so Windows may display a SmartScreen warning. Click “More info” and then select “Run anyway.” The checksum is included in every release (`PolarisInstaller.exe.sha256`); you can verify it yourself.
 
-**Where are the reports and logs?** Error reports are in `BepInEx/Polaris/reports/` in the game folder — one file per game session, keeping the 20 most recent; the BepInEx log is at `BepInEx/LogOutput.log`.
+**Where are the reports and logs?** Error reports are located in the game directory at `BepInEx/Polaris/reports/`. There is one file per game session, and the system retains up to the 20 most recent reports; Bep
 
-**How do I turn off update checks?** Turn off "Automatic update checks" on the Polaris tab of the game's Settings screen.
-
-**Polaris stopped working after a game update?** Polaris is compiled for a specific game version (currently ver030i). After a major game update, you may need to wait for a new Polaris release; if its core patches stop working, it will tell you and exit rather than keep running in a broken state.
-
-**Don't want in-game error alerts?** On the Polaris tab of the Settings screen, turn off "In-game error alerts", set "Minimum alert level" to "Persistent and above", or move the alerts to another corner (error reports are still written). Finer thresholds live in `BepInEx/config/Polaris/_polaris_diagnostics.cfg`.
-
-## For developers
-
-See [doc/DEVELOPING.md](doc/DEVELOPING.md) for the build, CI, release process, and directory structure.
-
-Polaris used to ship a full game API library, which has since been split out into a separate project; the complete old code is preserved in the `legacy` branch and the `pre-slim-v2.0.0` tag.
-
-## License
-
-LGPL-2.1, see [LICENSE.txt](LICENSE.txt). For third-party components, see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Translated with DeepL.com (free version)
