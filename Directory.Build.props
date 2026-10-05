@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
   <!--
     游戏程序集的位置。唯一来源是 aic_path.txt：单行纯文本，内容就是游戏根目录
@@ -20,7 +20,8 @@
     <AicManagedDir Condition="'$(AicGameDir)' != ''">$(AicGameDir)\AliceInCradle_Data\Managed</AicManagedDir>
   </PropertyGroup>
 
-  <Target Name="CheckAicGameDir" BeforeTargets="ResolveAssemblyReferences">
+  <!-- 只有引用游戏程序集的项目（PolarisCore，设了 RequiresAicGame）才要求游戏目录；Watcher、Installer 不需要。 -->
+  <Target Name="CheckAicGameDir" BeforeTargets="ResolveAssemblyReferences" Condition="'$(RequiresAicGame)' == 'true'">
     <Error Condition="'$(AicGameDir)' == ''"
            Text="aic_path.txt not found (searched upwards from $(MSBuildThisFileDirectory)).&#xA;Create aic_path.txt in the repository root. It must hold a single line: the AliceInCradle install directory, i.e. the one that contains AliceInCradle_Data." />
     <Error Condition="!Exists('$(AicManagedDir)')"

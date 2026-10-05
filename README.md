@@ -26,6 +26,23 @@
 
 所有阈值在 `BepInEx/config/Polaris/_polaris_diagnostics.cfg`；报告写在 `BepInEx/Polaris/reports/`（每局一个文件，最多保留 20 份）。
 
+## CI / 发布（GitHub Actions）
+
+| 工作流 | 触发 | 做什么 |
+|---|---|---|
+| `ci.yml` | 推送到 main / refactor/ feat/ fix/ 分支、所有 PR | 构建 PolarisWatcher；有游戏程序集时再构建插件、发布安装器并跑安装器冒烟测试，产物上传为 artifact |
+| `release.yml` | 推送 `v*` 标签 | 同上（必须有游戏程序集），核对标签与 `<Version>` 一致后创建 GitHub Release，附 `PolarisInstaller.exe`、`.sha256`、`PolarisCore-manual.zip` |
+
+编译插件需要游戏的程序集（版权文件，不能进仓库），所以要在仓库里配一个密钥：
+
+1. 运行 `tools/pack-managed.ps1 -GameDir "<游戏目录>"` 得到 `aic-managed.zip`（约 4 MB，只含 6 个 dll）。
+2. 把它放在**你自己控制的私有位置**（私有仓库的 Release 资源、对象存储的带签名链接等，不要公开）。
+3. 在仓库 Settings → Secrets and variables → Actions 新建：`AIC_MANAGED_URL`（下载地址）；地址需要鉴权时再加 `AIC_MANAGED_AUTH`（例如 `Bearer <token>`）。
+
+没配密钥（例如来自 fork 的 PR）时，CI 只构建不依赖游戏的 PolarisWatcher，插件与安装器步骤会被跳过并给出提示。游戏更新后重新打一份 zip 覆盖即可。
+
+发布一个版本：改 `PolarisCore.csproj` 的 `<Version>` → 提交 → `git tag v2.0.1 && git push origin v2.0.1`。
+
 ## 开发者：构建
 
 1. 在仓库**上一级目录**创建 `aic_path.txt`，单行写游戏根目录（含 `AliceInCradle_Data` 的那一层）。

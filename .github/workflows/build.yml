@@ -1,0 +1,134 @@
+name: Build
+
+# 可复用的构建流程，由 ci.yml（每次提交）和 release.yml（打标签）调用。
+#
+# 编译 PolarisCore 需要游戏的程序集（Assembly-CSharp 等），那是游戏的版权文件，不能放进仓库。
+# 做法：把它们打成 zip（tools/pack-managed.ps1），放在你自己控制的私有位置，把下载地址存为仓库密钥
+# AIC_MANAGED_URL（需要鉴权时再存 AIC_MANAGED_AUTH，例如 "Bearer xxxx"）。
+# 没有密钥时（例如来自 fork 的 PR）只构建不依赖游戏的 PolarisWatcher，插件与安装器被跳过。
+
+on:
+  workflow_call:
+    inputs:
+      require-game:
+        description: 没有游戏程序集时是否直接失败（发布时为 true）
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  watcher:
+    name: PolarisWatcher
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-watcher-${{ hashFiles('Watcher/*.csproj') }}
+
+      - name: Build
+        run: dotnet build Watcher/PolarisWatcher.csproj -c Release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PolarisWatcher
+          path: Watcher/bin/Release/net48/PolarisWatcher.exe
+          if-no-files-found: error
+
+  plugin-and-installer:
+    name: Plugin + Installer
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      AIC_MANAGED_URL: ${{ secrets.AIC_MANAGED_URL }}
+      AIC_MANAGED_AUTH: ${{ secrets.AIC_MANAGED_AUTH }}
+      REQUIRE_GAME: ${{ inputs.require-game }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-main-${{ hashFiles('**/*.csproj', 'build/*.props') }}
+          restore-keys: nuget-main-
+
+      - name: Fetch game assemblies
+        id: game
+        shell: pwsh
+        run: |
+          if (-not $env:AIC_MANAGED_URL) {
+            if ($env:REQUIRE_GAME -eq 'true') { throw "密钥 AIC_MANAGED_URL 未设置，无法编译发布版。" }
+            "available=false" >> $env:GITHUB_OUTPUT
+            Write-Host "::notice::未设置 AIC_MANAGED_URL（可能是 fork 的 PR）：跳过插件与安装器的构建。"
+            exit 0
+          }
+
+          $dir = Join-Path $env:RUNNER_TEMP "game"
+          $managed = Join-Path $dir "AliceInCradle_Data\Managed"
+          New-Item -ItemType Directory -Force $managed | Out-Null
+          $zip = Join-Path $env:RUNNER_TEMP "managed.zip"
+
+          $headers = @{}
+          if ($env:AIC_MANAGED_AUTH) { $headers["Authorization"] = $env:AIC_MANAGED_AUTH }
+          # 地址是 GitHub Releases 的 API 资源链接时，要用这个 Accept 才会返回文件本身。
+          if ($env:AIC_MANAGED_URL -like "https://api.github.com/*") { $headers["Accept"] = "application/octet-stream" }
+
+          Invoke-WebRequest -Uri $env:AIC_MANAGED_URL -Headers $headers -OutFile $zip
+          Expand-Archive $zip $managed -Force
+          "available=true" >> $env:GITHUB_OUTPUT
+          # 构建脚本读取环境变量 AicGameDir（见 Directory.Build.props）；子进程里的 dotnet build 也会继承。
+          "AicGameDir=$dir" >> $env:GITHUB_ENV
+
+      - name: Build plugin
+        if: steps.game.outputs.available == 'true'
+        run: dotnet build PolarisCore.csproj -c Release
+
+      - name: Publish installer
+        if: steps.game.outputs.available == 'true'
+        run: dotnet publish Installer/PolarisInstaller.csproj -c Release -o publish
+
+      - name: Installer smoke test
+        if: steps.game.outputs.available == 'true'
+        shell: pwsh
+        run: ./tools/ci-smoke.ps1 -Installer publish/PolarisInstaller.exe
+
+      - name: Package
+        if: steps.game.outputs.available == 'true'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item publish/PolarisInstaller.exe dist/
+          $hash = (Get-FileHash dist/PolarisInstaller.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  PolarisInstaller.exe" | Set-Content dist/PolarisInstaller.exe.sha256 -Encoding ascii
+
+          # 给想手动安装的人：插件、崩溃观察者与图标，按游戏目录的相对位置摆好。
+          $stage = "stage/BepInEx/plugins"
+          New-Item -ItemType Directory -Force "$stage/Polaris" | Out-Null
+          Copy-Item bin/Release/netstandard2.1/PolarisCore.dll $stage/
+          Copy-Item Watcher/bin/Release/net48/PolarisWatcher.exe "$stage/Polaris/"
+          Copy-Item polaris_icon.png "$stage/Polaris/"
+          Compress-Archive -Path stage/BepInEx -DestinationPath dist/PolarisCore-manual.zip
+
+      - uses: actions/upload-artifact@v4
+        if: steps.game.outputs.available == 'true'
+        with:
+          name: polaris-dist
+          path: dist/*
+          if-no-files-found: error

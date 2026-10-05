@@ -1,4 +1,4 @@
-# 发布单文件自包含安装器：玩家双击 PolarisInstaller.exe 即可，无需另装 .NET。
+﻿# 发布单文件自包含安装器：玩家双击 PolarisInstaller.exe 即可，无需另装 .NET。
 # 产物：Installer/publish/PolarisInstaller.exe
 param([string]$Configuration = "Release")
 

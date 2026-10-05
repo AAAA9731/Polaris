@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "refactor/**", "feat/**", "fix/**"]
+  pull_request:
+  workflow_dispatch:
+
+# 同一分支上有新提交时，取消还在跑的旧构建。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
