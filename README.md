@@ -33,16 +33,13 @@
 | `ci.yml` | 推送到 main / refactor/ feat/ fix/ 分支、所有 PR | 构建 PolarisWatcher；有游戏程序集时再构建插件、发布安装器并跑安装器冒烟测试，产物上传为 artifact |
 | `release.yml` | 推送 `v*` 标签 | 同上（必须有游戏程序集），核对标签与 `<Version>` 一致后创建 GitHub Release，附 `PolarisInstaller.exe`、`.sha256`、`PolarisCore-manual.zip` |
 
-编译插件需要游戏的程序集（版权文件，不能进仓库），所以要在仓库里配一个密钥：
+编译插件需要游戏的程序集（版权文件，不能进本仓库）。做法：
 
-1. 运行 `tools/pack-managed.ps1 -GameDir "<游戏目录>"` 得到 `aic-managed.zip`（约 4 MB，只含 6 个 dll）。
-2. 把它放在**你自己控制的私有位置**（私有仓库的 Release 资源、对象存储的带签名链接等，不要公开）。
-3. 在仓库 Settings → Secrets and variables → Actions 新建：`AIC_MANAGED_URL`（下载地址）；地址需要鉴权时再加 `AIC_MANAGED_AUTH`（例如 `Bearer <token>`）。
+1. 运行 `tools/pack-managed.ps1 -GameDir "<游戏目录>"` 得到 `aic-managed.zip`（约 4 MB，只含 6 个原样复制的 dll，未做任何改动）。
+2. 放进一个**私有**仓库（目前是维护者个人名下的 `AAAA9731/aic-managed-refs`，文件名 `aic-managed.zip`）。**不要公开。**
+3. 给这个私有仓库加一个**只读 deploy key**，私钥存为本仓库的 Actions 密钥 `AIC_MANAGED_KEY`。CI 用它拉取私有仓库，不需要个人访问令牌。
 
-当前托管在维护者个人名下的**私有**仓库 `AAAA9731/aic-managed-refs`（Release `ver030i` 的 `aic-managed.zip`，文件原样复制、未做任何改动）。`AIC_MANAGED_AUTH` 用一个只读该仓库内容的 fine-grained token（`Bearer github_pat_…`）。游戏更新后上传新版本：
-`gh release create <新版本号> aic-managed.zip --repo AAAA9731/aic-managed-refs`，并把 `AIC_MANAGED_URL` 改成新资源地址。
-
-没配密钥（例如来自 fork 的 PR）时，CI 只构建不依赖游戏的 PolarisWatcher，插件与安装器步骤会被跳过并给出提示。游戏更新后重新打一份 zip 覆盖即可。
+没有 `AIC_MANAGED_KEY`（例如来自 fork 的 PR）时，CI 只构建不依赖游戏的 PolarisWatcher，插件与安装器步骤会被跳过并给出提示。游戏更新后把新的 zip 提交进私有仓库即可。
 
 发布一个版本：改 `PolarisCore.csproj` 的 `<Version>` → 提交 → `git tag v2.0.1 && git push origin v2.0.1`。
 

@@ -1,11 +1,12 @@
-name: Build
+﻿name: Build
 
 # 可复用的构建流程，由 ci.yml（每次提交）和 release.yml（打标签）调用。
 #
-# 编译 PolarisCore 需要游戏的程序集（Assembly-CSharp 等），那是游戏的版权文件，不能放进仓库。
-# 做法：把它们打成 zip（tools/pack-managed.ps1），放在你自己控制的私有位置，把下载地址存为仓库密钥
-# AIC_MANAGED_URL（需要鉴权时再存 AIC_MANAGED_AUTH，例如 "Bearer xxxx"）。
-# 没有密钥时（例如来自 fork 的 PR）只构建不依赖游戏的 PolarisWatcher，插件与安装器被跳过。
+# 编译 PolarisCore 需要游戏的程序集（Assembly-CSharp 等），那是游戏的版权文件，不能放进本仓库。
+# 做法：把原样复制的 dll（tools/pack-managed.ps1 打成 aic-managed.zip）放进维护者个人名下的一个**私有**仓库
+# AAAA9731/aic-managed-refs，CI 用只读的 deploy key 拉取它：私钥存为本仓库的密钥 AIC_MANAGED_KEY，
+# 只能读那一个仓库，不涉及任何个人访问令牌。
+# 没有这个密钥时（例如来自 fork 的 PR）只构建不依赖游戏的 PolarisWatcher，插件与安装器被跳过。
 
 on:
   workflow_call:
@@ -53,8 +54,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     env:
-      AIC_MANAGED_URL: ${{ secrets.AIC_MANAGED_URL }}
-      AIC_MANAGED_AUTH: ${{ secrets.AIC_MANAGED_AUTH }}
+      AIC_MANAGED_KEY: ${{ secrets.AIC_MANAGED_KEY }}
       REQUIRE_GAME: ${{ inputs.require-game }}
     steps:
       - uses: actions/checkout@v4
@@ -69,28 +69,29 @@ jobs:
           key: nuget-main-${{ hashFiles('**/*.csproj', 'build/*.props') }}
           restore-keys: nuget-main-
 
-      - name: Fetch game assemblies
+      - name: Fetch game assemblies (private repo, read-only deploy key)
+        if: env.AIC_MANAGED_KEY != ''
+        uses: actions/checkout@v4
+        with:
+          repository: AAAA9731/aic-managed-refs
+          ssh-key: ${{ secrets.AIC_MANAGED_KEY }}
+          path: aic-refs
+
+      - name: Prepare game assemblies
         id: game
         shell: pwsh
         run: |
-          if (-not $env:AIC_MANAGED_URL) {
-            if ($env:REQUIRE_GAME -eq 'true') { throw "密钥 AIC_MANAGED_URL 未设置，无法编译发布版。" }
+          $zip = "aic-refs/aic-managed.zip"
+          if (-not (Test-Path $zip)) {
+            if ($env:REQUIRE_GAME -eq 'true') { throw "缺少游戏程序集（密钥 AIC_MANAGED_KEY 未设置或拉取失败），无法编译发布版。" }
             "available=false" >> $env:GITHUB_OUTPUT
-            Write-Host "::notice::未设置 AIC_MANAGED_URL（可能是 fork 的 PR）：跳过插件与安装器的构建。"
+            Write-Host "::notice::没有游戏程序集（可能是 fork 的 PR）：跳过插件与安装器的构建。"
             exit 0
           }
 
           $dir = Join-Path $env:RUNNER_TEMP "game"
           $managed = Join-Path $dir "AliceInCradle_Data\Managed"
           New-Item -ItemType Directory -Force $managed | Out-Null
-          $zip = Join-Path $env:RUNNER_TEMP "managed.zip"
-
-          $headers = @{}
-          if ($env:AIC_MANAGED_AUTH) { $headers["Authorization"] = $env:AIC_MANAGED_AUTH }
-          # 地址是 GitHub Releases 的 API 资源链接时，要用这个 Accept 才会返回文件本身。
-          if ($env:AIC_MANAGED_URL -like "https://api.github.com/*") { $headers["Accept"] = "application/octet-stream" }
-
-          Invoke-WebRequest -Uri $env:AIC_MANAGED_URL -Headers $headers -OutFile $zip
           Expand-Archive $zip $managed -Force
           "available=true" >> $env:GITHUB_OUTPUT
           # 构建脚本读取环境变量 AicGameDir（见 Directory.Build.props）；子进程里的 dotnet build 也会继承。
