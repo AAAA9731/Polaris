@@ -3,7 +3,7 @@ using XX;
 
 namespace Polaris
 {
-    /// <summary>把 <see cref="TX.getCurrentFamilyName()"/> 归到内置 zh/ja/en 三种语言之一（不走 .plang，因为致命错误页恰恰要在本地化机制自身出问题时也能显示）。</summary>
+    /// <summary>把 <see cref="TX.getCurrentFamilyName()"/> 归到内置 zh/ja/en 三种语言之一，供错误提示直接使用。</summary>
     internal static class NoticeLocale
     {
         internal static NoticeLanguage Current

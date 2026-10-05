@@ -1,8 +1,7 @@
 ﻿namespace Polaris.Localization
 {
     /// <summary>
-    /// Polaris 自己那几条设置项文案的内置翻译，写在代码里而非 <c>.plang</c>：
-    /// 设置项在 <c>Plugin.Awake</c> 绑定配置文件时就要查表（写进 <c>.cfg</c> 注释），早于 <c>.plang</c> 在 <c>Start</c> 才生效的注册。
+    /// Polaris 设置项的内置翻译，在设置项扫描和绑定配置之前登记到文案表。
     /// </summary>
     internal static class PolarisStrings
     {

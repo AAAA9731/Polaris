@@ -63,7 +63,7 @@
 
 构建、CI、发布流程和目录结构见 [doc/DEVELOPING.md](doc/DEVELOPING.md)。
 
-本功能分支把少量常用游戏入口、资源加载与存档容器编解码合并到当前 Core，文案、菜单与设置复用现有 API。具体保留范围、固定旧版基线与 30i 验证见 [精简审核说明](doc/CORE-LIB-REVIEW.md)。完整旧 Core 仍保留在 `legacy` 分支和 `pre-slim-v2.0.0` 标签里。
+本功能分支把少量常用游戏入口、资源加载和模组数据存档合并到当前 Core，文案、菜单与声明式设置复用现有 API。模组调用一次 `SaveAPI.Register<T>(id)` 后，数据会随原版存档保存与加载；扩展资源文件的发现、注册和生成机制不保留。具体入口、固定旧版基线与 30i 验证见 [精简审核说明](doc/CORE-LIB-REVIEW.md)。完整旧 Core 仍保留在 `legacy` 分支和 `pre-slim-v2.0.0` 标签里。
 
 ## 许可
 

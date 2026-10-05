@@ -18,7 +18,7 @@ SelfUpdate/      游戏内自动更新
 Contracts/       诊断的公开数据类型
 Api/             少量游戏入口（直接使用游戏原版类型）
 Resources/       固定目录的图片、WAV/OGG、PXLS 加载与释放
-Save/            原有尾部容器的字节编解码；无自动存档挂接或强类型平台
+Save/            一次显式注册，JSON 数据随原版存档保存／加载；复用旧尾部容器与存档挂接
 Infra/           错误、健康、路径等基础设施
 Settings/        设置项框架：给静态字段标 `[PolarisSetting]` 即可渲染进原版设置界面并自动保存；`PolarisSettings.cs` 是 Polaris 自己的设置项
 Patch/           标题画面补丁（模组管理页入口、告知页）与设置界面（UiCFG）补丁

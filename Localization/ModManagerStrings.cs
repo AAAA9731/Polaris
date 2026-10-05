@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// 模组管理页（<see cref="PolarisManagementUI"/>、<see cref="PolarisModDetailPopup"/>、<see cref="PolarisRestartPrompt"/>）全部界面文案的内置翻译。
-    /// 走内置表而非 <c>.plang</c>，确保玩家在此关闭出问题的模组时该页文案不会被那个模组顶掉；取值一律走 <see cref="Text"/> 现查，不缓存，以跟随玩家实时切换语言。
+    /// 管理器的内置文案；取值一律走 <see cref="Text"/> 现查，不缓存，以跟随玩家实时切换语言。
     /// </summary>
     internal static class ModManagerStrings
     {

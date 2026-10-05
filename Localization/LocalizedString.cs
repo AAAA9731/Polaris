@@ -5,7 +5,7 @@ namespace Polaris.Localization
 {
     /// <summary>
     /// "显示用字符串"本地化键约定的唯一判定实现：<c>&amp;</c> 开头表示本地化键，<c>&amp;&amp;</c> 开头表示转义的字面 <c>&amp;</c>，只看第 0 个字符。
-    /// 被多个模块（设置项文案、.pui 编译期展开、热重载、编辑器预览）共用；因链接进 net472 VSIX 编译，不得引用 UnityEngine / XX / BepInEx 或 Polaris 其它类型。
+    /// 供文案和设置项共用的纯字符串约定，不依赖游戏类型。
     /// </summary>
     public static class LocalizedString
     {
