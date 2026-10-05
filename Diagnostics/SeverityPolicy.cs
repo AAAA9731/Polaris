@@ -250,6 +250,7 @@ namespace Polaris.Diagnostics
             }
 
             AssemblyOwner owner = state.Owner;
+            ModFlags.Flag(owner, ErrorSeverity.Persistent, incident != null ? DescribeIncident(incident) : body);
             InGameAlert.Persistent(
                 KeyOf(owner),
                 AlertStrings.PersistTitle(owner.DisplayName ?? owner.FileName),

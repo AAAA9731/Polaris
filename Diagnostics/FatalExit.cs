@@ -29,7 +29,7 @@ namespace Polaris.Diagnostics
 
             try
             {
-                Record(reason, culpritName, writeReport);
+                Record(reason, culpritName, culprit, writeReport);
 
                 if (!DiagnosticsConfig.AutoQuit)
                 {
@@ -64,7 +64,7 @@ namespace Polaris.Diagnostics
 
             try
             {
-                Record(reason, culpritName, true);
+                Record(reason, culpritName, culprit, true);
                 DiagnosticsRuntime.Logger.LogError($"[Polaris] Ending the game: {reason}");
             }
             catch (Exception)
@@ -88,9 +88,10 @@ namespace Polaris.Diagnostics
             }
         }
 
-        static void Record(string reason, string culpritName, bool writeReport)
+        static void Record(string reason, string culpritName, AssemblyOwner culprit, bool writeReport)
         {
             SessionSentinel.MarkFatal(culpritName, reason);
+            ModFlags.Flag(culprit, ErrorSeverity.Critical, reason);
 
             if (writeReport)
             {

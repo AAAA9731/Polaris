@@ -1,4 +1,4 @@
-namespace Polaris.Localization
+﻿namespace Polaris.Localization
 {
     /// <summary>
     /// 模组管理页（<see cref="PolarisManagementUI"/>、<see cref="PolarisModDetailPopup"/>、<see cref="PolarisRestartPrompt"/>）全部界面文案的内置翻译。
@@ -40,6 +40,14 @@ namespace Polaris.Localization
         internal const string DetailDisabled = "detail_disabled";
         internal const string DetailNoInfo = "detail_no_info";
         internal const string DetailFailed = "detail_failed";
+
+        // ---- 出过问题的模组的标记 ----
+        internal const string RowFlagPersistent = "row_flag_persistent";
+        internal const string RowFlagCritical = "row_flag_critical";
+        internal const string RowFlagUpdated = "row_flag_updated";
+        internal const string DetailFlagPersistent = "detail_flag_persistent";
+        internal const string DetailFlagCritical = "detail_flag_critical";
+        internal const string DetailFlagUpdated = "detail_flag_updated";
 
         static bool registered;
 
@@ -211,6 +219,47 @@ namespace Polaris.Localization
             {
                 ["zh"] = "操作失败：",
                 ["ja"] = "失敗：",
+            });
+
+            // 行尾标记：前导两个空格是排版所需，翻译时请保留；整行不自动换行，须尽量短。
+            loc.Register(P + RowFlagPersistent, new LocalizedText("  [errors]")
+            {
+                ["zh"] = "  [持续出错]",
+                ["ja"] = "  [エラー多発]",
+            });
+
+            loc.Register(P + RowFlagCritical, new LocalizedText("  [ended game]")
+            {
+                ["zh"] = "  [曾致游戏退出]",
+                ["ja"] = "  [強制終了の原因]",
+            });
+
+            loc.Register(P + RowFlagUpdated, new LocalizedText("  [updated]")
+            {
+                ["zh"] = "  [已更新]",
+                ["ja"] = "  [更新済み]",
+            });
+
+            // {0} 是问题摘要，{1} 是发生日期。
+            loc.Register(P + DetailFlagPersistent, new LocalizedText(
+                "Warning: this mod kept raising errors on {1}: {0}\nThe mod file has not changed since, so the problem is probably still there.")
+            {
+                ["zh"] = "警告：该模组曾在 {1} 持续出错：{0}\n模组文件自那以后没有变化，问题多半仍然存在。",
+                ["ja"] = "警告：このModは {1} にエラーを繰り返しました：{0}\nそれ以降Modファイルは変更されておらず、問題は残っている可能性が高いです。",
+            });
+
+            loc.Register(P + DetailFlagCritical, new LocalizedText(
+                "Warning: this mod made Polaris end the game on {1}: {0}\nThe mod file has not changed since, so the problem is probably still there.")
+            {
+                ["zh"] = "警告：该模组曾在 {1} 导致 Polaris 结束游戏：{0}\n模组文件自那以后没有变化，问题多半仍然存在。",
+                ["ja"] = "警告：このModは {1} にPolarisがゲームを終了する原因となりました：{0}\nそれ以降Modファイルは変更されておらず、問題は残っている可能性が高いです。",
+            });
+
+            loc.Register(P + DetailFlagUpdated, new LocalizedText(
+                "Note: this mod had a problem on {1} ({0}), but its file has been updated since, so it may be fixed. This note is shown once.")
+            {
+                ["zh"] = "提示：该模组曾在 {1} 出过问题（{0}），但文件之后被更新过，问题可能已修复。此提示只显示一次。",
+                ["ja"] = "お知らせ：このModは {1} に問題を起こしました（{0}）が、その後ファイルが更新されたため、修正されている可能性があります。この表示は一度だけです。",
             });
         }
     }

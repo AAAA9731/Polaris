@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using nel;
@@ -244,6 +244,21 @@ namespace Polaris
             if (hasModInfo)
             {
                 text.Append('\n').Append(record.DisplayName);
+            }
+
+            Diagnostics.ModFlagInfo flag = Diagnostics.ModFlags.Lookup(record.EnabledPath, record.DisabledPath);
+            if (flag != null && flag.State != Diagnostics.FlagState.None)
+            {
+                string key = flag.State == Diagnostics.FlagState.Updated
+                    ? ModManagerStrings.DetailFlagUpdated
+                    : flag.Level == Diagnostics.ErrorSeverity.Critical
+                        ? ModManagerStrings.DetailFlagCritical
+                        : ModManagerStrings.DetailFlagPersistent;
+
+                text.Append("\n\n").Append(string.Format(
+                    ModManagerStrings.Text(key),
+                    Clip(flag.Reason, DescriptionMax),
+                    flag.When.ToString("yyyy-MM-dd")));
             }
 
             if (error != null)

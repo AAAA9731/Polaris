@@ -197,6 +197,32 @@ namespace Polaris
 
             // 重建后按钮全是新实例，旧悬停状态失效，主动刷新一次浮窗内容。
             PolarisModDetailPopup.Refresh(mods, TargetEnabled, lastErrors);
+
+            // "已更新"只提示这一次：显示过了就从磁盘记录里清掉（本局内浮窗仍能查到）。
+            Diagnostics.ModFlags.ClearUpdated(mods.ConvertAll(record => (record.EnabledPath, record.DisabledPath)));
+        }
+
+        /// <summary>行尾的警示标记；没问题的模组什么都不加。</summary>
+        static string FlagMark(Diagnostics.ModFlagInfo flag)
+        {
+            if (flag == null)
+            {
+                return "";
+            }
+
+            switch (flag.State)
+            {
+                case Diagnostics.FlagState.Flagged:
+                    return ModManagerStrings.Text(flag.Level == Diagnostics.ErrorSeverity.Critical
+                        ? ModManagerStrings.RowFlagCritical
+                        : ModManagerStrings.RowFlagPersistent);
+
+                case Diagnostics.FlagState.Updated:
+                    return ModManagerStrings.Text(ModManagerStrings.RowFlagUpdated);
+
+                default:
+                    return "";
+            }
         }
 
         /// <summary>按查询串收放模组行，返回命中条数。刻意不重建页面（会打断玩家正在输入的搜索框），只就地拨显隐。</summary>
@@ -385,11 +411,12 @@ namespace Polaris
                     bool target = TargetEnabled(record);
                     string prefix = target ? "[✓] " : "[ ] ";
                     string dirtyMark = target != record.Enabled ? "  *" : "";
+                    string flagMark = FlagMark(Diagnostics.ModFlags.Lookup(record.EnabledPath, record.DisabledPath));
                     lastErrors.TryGetValue(record.DisplayName, out string error);
                     aBtnNel rowButton = box.addButtonT<aBtnNel>(new DsnDataButton
                     {
                         name = record.DisplayName,
-                        title = prefix + Headline(record.Info, record.DisplayName) + dirtyMark
+                        title = prefix + Headline(record.Info, record.DisplayName) + dirtyMark + flagMark
                                 + (error != null ? ModManagerStrings.Text(ModManagerStrings.RowFailed) : ""),
                         w = box.use_w,
                         h = 26f,
