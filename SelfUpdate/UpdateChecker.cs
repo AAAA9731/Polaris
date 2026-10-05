@@ -94,12 +94,21 @@ namespace Polaris.SelfUpdate
                     yield break;
                 }
 
+                // 此前下载好、还没换上的更新如果比 GitHub 上的最新版更旧，就作废：否则玩家一退出游戏，Watcher 会先装上那个旧版本，
+                // 下次启动再提示最新版，变成一个版本一个版本地爬。不论落后几个版本，都只直接更新到最新的那个。
+                string pendingTag = File.Exists(PendingFile) ? Read(PendingFile)?.Split('\n')[0].Trim() : null;
+                if (pendingTag != null && pendingTag != release.Tag)
+                {
+                    DiscardPending();
+                    pendingTag = null;
+                }
+
                 if (Read(SkippedFile) == release.Tag)
                 {
                     yield break;
                 }
 
-                if (File.Exists(PendingFile) && Read(PendingFile)?.Split('\n')[0].Trim() == release.Tag)
+                if (pendingTag == release.Tag)
                 {
                     // 这个版本已经下载好了，只等退出游戏。
                     ShowReady(release.Tag);
@@ -282,6 +291,28 @@ namespace Polaris.SelfUpdate
 
                 File.Delete(DoneFile);
                 InGameAlert.Toast("polaris-update-done", UpdateStrings.UpdDone(done.Trim()), "", null, null);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>丢掉已暂存但尚未应用的更新。</summary>
+        static void DiscardPending()
+        {
+            try
+            {
+                if (Directory.Exists(StagingDir))
+                {
+                    Directory.Delete(StagingDir, recursive: true);
+                }
+
+                if (File.Exists(PendingFile))
+                {
+                    File.Delete(PendingFile);
+                }
+
+                Plugin.Logger.LogInfo("[Polaris] Discarded an older downloaded update; a newer release is available.");
             }
             catch (Exception)
             {

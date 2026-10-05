@@ -9,7 +9,7 @@ namespace Polaris.Patch
     /// 把 Polaris 的设置项渲染挂进原版设置界面，通过改写构造函数的 <c>ref</c> 参数
     /// <c>_FnDesignerCreateAfter</c>（原版扩展口）实现，链式调用而非替换，且排在原委托之前。
     /// ver030 起设置界面分成七个分类标签页，这个委托对每个标签页各调一次。Polaris 的设置项画在专属标签页上（见 <see cref="PolarisTab"/>）；
-    /// 只有玩家恰好解锁了那一页的原版特殊项、Polaris 无法接管时，才在这里追加到那一页尾部。
+    /// 只有专属标签页没能建出来（游戏更新后转译器失效）时，才退回追加在“常规”页尾部。
     /// </summary>
     [HarmonyPatch(typeof(UiCFG), MethodType.Constructor,
         typeof(UiBoxDesignerFamily), typeof(UiBoxDesigner), typeof(UiBoxDesigner), typeof(Designer), typeof(bool), typeof(bool),
@@ -23,7 +23,7 @@ namespace Polaris.Patch
 
             _FnDesignerCreateAfter = (Designer tab, UiCFG.CATEG category) =>
             {
-                if (category == PolarisTab.Category)
+                if (!PolarisTab.Active && category == UiCFG.CATEG.general)
                 {
                     PolarisSettingsScreen.Append(__instance);
                 }
