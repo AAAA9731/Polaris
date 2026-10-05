@@ -13,9 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- 崩溃观察者是独立的 net48 程序，不能被 Core 的 **/*.cs 通配吃进去。 -->
-    <Compile Remove="Watcher\**" />
-    <None Remove="Watcher\**" />
+    <!-- 崩溃观察者与安装器是独立项目，不能被 Core 的 **/*.cs 通配吃进去。 -->
+    <Compile Remove="Watcher\**;Installer\**" />
+    <None Remove="Watcher\**;Installer\**" />
+    <EmbeddedResource Remove="Watcher\**;Installer\**" />
   </ItemGroup>
 
   <Import Project="build\Polaris.Runtime.props" />

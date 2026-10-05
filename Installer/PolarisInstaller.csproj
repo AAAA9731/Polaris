@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Polaris 图形安装器：玩家双击 exe 即可安装/更新/卸载 BepInEx + Polaris，并管理模组启停。
+       发布命令见 Installer/publish.ps1，产物是单个自包含 exe，玩家无需另装 .NET。 -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>PolarisInstaller</AssemblyName>
+    <RootNamespace>PolarisInstaller</RootNamespace>
+    <Version>2.0.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- 写在项目里而不是命令行 -r：命令行的 RuntimeIdentifier 会传给被引用的项目，把它们的输出路径也改了。 -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <NoWarn>$(NoWarn);NU1702</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="..\polaris_icon.png" Link="logo.png" />
+  </ItemGroup>
+
+  <!-- 随安装器分发的文件，嵌入 exe：BepInEx 6 (Mono) 与 Polaris 自己的三个文件。 -->
+  <ItemGroup>
+    <EmbeddedResource Include="Payload\game\**" LogicalName="game/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- 先构建 PolarisCore 与 PolarisWatcher，再把产物嵌进来。用 Exec 而不是 ProjectReference：
+       自包含的安装器不能引用非自包含的 exe 项目（NETSDK1150）。 -->
+  <Target Name="BuildPolarisFiles" BeforeTargets="BeforeBuild;BeforeResolveReferences" Condition="'$(SkipPolarisBuild)' != 'true'">
+    <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)..\PolarisCore.csproj&quot; -c $(Configuration) -nologo -v:q" />
+    <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)..\Watcher\PolarisWatcher.csproj&quot; -c $(Configuration) -nologo -v:q" />
+  </Target>
+
+  <Target Name="EmbedPolarisFiles" AfterTargets="BuildPolarisFiles" BeforeTargets="PrepareForBuild;AssignTargetPaths">
+    <ItemGroup>
+      <EmbeddedResource Include="..\bin\$(Configuration)\netstandard2.1\PolarisCore.dll" LogicalName="polaris/PolarisCore.dll" />
+      <EmbeddedResource Include="..\Watcher\bin\$(Configuration)\net48\PolarisWatcher.exe" LogicalName="polaris/PolarisWatcher.exe" />
+      <EmbeddedResource Include="..\polaris_icon.png" LogicalName="polaris/polaris_icon.png" />
+    </ItemGroup>
+  </Target>
+
+</Project>
