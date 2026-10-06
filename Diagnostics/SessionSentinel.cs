@@ -34,6 +34,7 @@ namespace Polaris.Diagnostics
 
         static bool installed;
         static bool disabled;
+        static bool closed;
         static string path;
 
         static DateTime processStart;
@@ -110,6 +111,11 @@ namespace Polaris.Diagnostics
 
             lock (Gate)
             {
+                if (closed)
+                {
+                    return;
+                }
+
                 try
                 {
                     string stable = Compose(stableOnly: true);
@@ -172,6 +178,9 @@ namespace Polaris.Diagnostics
 
             lock (Gate)
             {
+                // 先立标志再删：看门狗线程可能刚好越过停止检查，不立标志它会在删除后把文件写回来。
+                closed = true;
+
                 try
                 {
                     string file = FilePath();

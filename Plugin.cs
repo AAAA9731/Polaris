@@ -132,20 +132,26 @@ namespace Polaris
         /// <summary>进程退出前的收尾：落一份"上一局摘要"供下次启动读取，控制台补一行汇总（无错误时不吭声）。</summary>
         private void OnApplicationQuit()
         {
-            // 先停看门狗：退出过程还要活一会儿（存档、淡出），不停会把它误判成卡死。
-            Diagnostics.DiagnosticsHost.Stop();
-
-            string summary = Diagnostics.DiagnosticsHost.Summary();
-            if (summary != null)
+            try
             {
-                Logger.LogMessage(summary);
+                // 先停看门狗：退出过程还要活一会儿（存档、淡出），不停会把它误判成卡死。
+                Diagnostics.DiagnosticsHost.Stop();
+
+                string summary = Diagnostics.DiagnosticsHost.Summary();
+                if (summary != null)
+                {
+                    Logger.LogMessage(summary);
+                }
+
+                PolarisAPI.Errors.Guard(PolarisErrorNotice.PersistPending, "saving the previous session's error summary");
             }
-
-            PolarisAPI.Errors.Guard(PolarisErrorNotice.PersistPending, "saving the previous session's error summary");
-
-            // 最后删掉会话哨兵，这是"正常结束"的唯一表达方式；须排在 PersistPending 之后。
-            Diagnostics.DiagnosticsHost.CloseSession();
-            Diagnostics.CoreErrorCapture.Uninstall();
+            finally
+            {
+                // 最后删掉会话哨兵，这是"正常结束"的唯一表达方式；须排在 PersistPending 之后。
+                // 放在 finally：前面任何一步抛异常都不能让正常退出被 Watcher 当成异常退出。
+                Diagnostics.DiagnosticsHost.CloseSession();
+                Diagnostics.CoreErrorCapture.Uninstall();
+            }
         }
 
         private const string Logo = """
