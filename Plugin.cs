@@ -92,6 +92,7 @@ namespace Polaris
         {
             // 先扫描设置项（读出玩家存的值），再启动依赖这些值的功能。
             PolarisAPI.Errors.Guard(Settings.SettingsAttributeScanner.ScanAll, "registering the settings");
+            PolarisAPI.Errors.Guard(Events.EventAttributeScanner.ScanAll, "subscribing attribute event handlers");
 
             // 必须在其它模组注册按钮之前占住标题菜单"设置"后面的位置。
             PolarisManagementUI.RegisterButton();
