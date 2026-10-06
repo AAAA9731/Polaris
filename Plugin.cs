@@ -132,6 +132,8 @@ namespace Polaris
         /// <summary>进程退出前的收尾：落一份"上一局摘要"供下次启动读取，控制台补一行汇总（无错误时不吭声）。</summary>
         private void OnApplicationQuit()
         {
+            PolarisAPI.Errors.Guard(() => PolarisAPI.Events.Post(new Events.GameQuitting()), "posting GameQuitting");
+
             try
             {
                 // 先停看门狗：退出过程还要活一会儿（存档、淡出），不停会把它误判成卡死。

@@ -44,6 +44,7 @@ namespace Polaris.Save
             try
             {
                 SaveRuntime.Instance.Load(Ba.bytes, Ba.Length);
+                PolarisAPI.Events.Post(new Events.SaveLoaded());
             }
             catch (Exception ex)
             {
@@ -58,7 +59,11 @@ namespace Polaris.Save
         [HarmonyPostfix, HarmonyPriority(Priority.First)]
         static void Postfix()
         {
-            try { SaveRuntime.Instance.ResetForNewGame(); }
+            try
+            {
+                SaveRuntime.Instance.ResetForNewGame();
+                PolarisAPI.Events.Post(new Events.NewGameStarted());
+            }
             catch (Exception ex) { SaveIntegration.Report(ex, "resetting mod save data"); }
         }
     }
