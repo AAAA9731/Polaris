@@ -46,6 +46,7 @@ namespace Polaris
         {
             Res.Runtime.MainThreadDispatcher.Drain();
             API.Hotkeys.Tick();
+            PolarisAPI.Game.UI.Flush();
             Res.Runtime.PxlsPump.Advance();
         }
 

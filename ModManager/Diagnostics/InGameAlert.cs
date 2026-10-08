@@ -46,6 +46,12 @@ namespace Polaris.Diagnostics
             internal bool Expanded;
             internal string Status;
             internal int Sequence;
+
+            /// <summary>来自 <c>Game.UI.Notify/Warn</c> 的普通提示：只有一段文字，不展开，点一下就收起。</summary>
+            internal bool Plain;
+
+            /// <summary>普通提示里的警告级别（带左侧强调条）。</summary>
+            internal bool Warning;
         }
 
         sealed class CriticalItem
@@ -99,6 +105,16 @@ namespace Polaris.Diagnostics
             }
 
             inbox.Enqueue(new Inbound { Command = Command.Toast, Item = new Item { Key = key, Title = title, Body = body, Owner = owner, ReportPath = reportPath } });
+        }
+
+        /// <summary>给 <c>Game.UI.Notify/Warn</c> 用：不受诊断提示开关与等级设置影响（这是模组主动想让玩家看到的，不是错误）。</summary>
+        internal static void ShowPlain(string text, bool warning)
+        {
+            inbox.Enqueue(new Inbound
+            {
+                Command = Command.Toast,
+                Item = new Item { Key = "plain:" + warning + ":" + text, Body = text, Plain = true, Warning = warning },
+            });
         }
 
         internal static void Persistent(string key, string title, string body, AssemblyOwner owner, string reportPath)
@@ -340,7 +356,7 @@ namespace Polaris.Diagnostics
             {
                 Item toast = toasts[i];
                 float w = 400f;
-                float h = toast.Expanded ? 204f : 70f;
+                float h = toast.Plain ? 64f : toast.Expanded ? 204f : 70f;
 
                 float targetY = bottom ? y - h : y;
 
@@ -357,12 +373,22 @@ namespace Polaris.Diagnostics
                 bool enabled = GUI.enabled;
                 GUI.enabled = live;
                 GUI.color = new Color(1f, 1f, 1f, alpha);
-                Panel(rect, accent: true);
+                Panel(rect, accent: !toast.Plain || toast.Warning);
 
                 float tx = rect.x + 18f;
                 float tw = w - 34f;
 
-                if (!toast.Expanded)
+                if (toast.Plain)
+                {
+                    GUI.Label(new Rect(tx, rect.y + 8f, tw, h - 16f), toast.Body, bodyStyle);
+
+                    // 点一下收起；没有详情可展开。
+                    if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+                    {
+                        toast.DyingAt = Time.realtimeSinceStartup;
+                    }
+                }
+                else if (!toast.Expanded)
                 {
                     GUI.Label(new Rect(tx, rect.y + 8f, tw, 32f), toast.Title, toastTitleStyle);
                     GUI.Label(new Rect(tx, rect.y + 42f, tw, 22f), AlertStrings.ToastHint, hintStyle);

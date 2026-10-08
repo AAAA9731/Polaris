@@ -27,6 +27,7 @@ namespace Polaris
 
             // 把库的 Errors 接到诊断引擎；此前库报的错只进了日志。
             PolarisAPI.Errors.SetBackend(new Diagnostics.DiagnosticsBackend());
+            PolarisAPI.Game.UI.SetBackend(new Diagnostics.NoticeBackend());
 
             // 目录建不出来不该把整个 Awake 掀掉，否则 Unity 不会再调 Start，子系统全部起不来。
             PolarisAPI.Errors.Guard(

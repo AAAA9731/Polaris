@@ -45,19 +45,32 @@ namespace Polaris
             /// <summary>给玩家看的界面提示。</summary>
             public static class UI
             {
-                /// <summary>在屏幕边上弹一行普通提示（和拾取物品时那种提示行同一处）；<c>&amp;</c> 开头的文字当作本地化键。游戏界面还没建好时什么都不做。</summary>
-                public static void Notify(string text)
+                /// <summary>最多攒这么多条尚无处可显示的提示，超出丢最旧的，免得没人接时无限增长。</summary>
+                const int MaxPending = 16;
+
+                static INoticeBackend backend;
+                static readonly System.Collections.Generic.Queue<(string Text, bool Warning)> pending = new();
+
+                /// <summary>
+                /// 接入"游戏界面之外"的提示后端（标题画面、加载期间用）；同一时刻只有一个，传 null 取消。
+                /// 装了 ModManager 时它会接入，模组一般不用管。
+                /// </summary>
+                public static void SetBackend(INoticeBackend value)
                 {
-                    Show(text, static (log, t) => log.AddLog(t), "Game.UI.Notify");
+                    backend = value;
+                    Flush();
                 }
 
-                /// <summary>弹一行带警告图标的提示。</summary>
-                public static void Warn(string text)
-                {
-                    Show(text, static (log, t) => log.AddAlert(t), "Game.UI.Warn");
-                }
+                /// <summary>
+                /// 给玩家弹一行普通提示；<c>&amp;</c> 开头的文字当作本地化键。
+                /// 游戏里用原版的提示行（和拾取物品那种同一处）；标题画面、加载期间交给 <see cref="SetBackend"/> 接入的后端；都没有就先攒着，等有处可显示再弹。
+                /// </summary>
+                public static void Notify(string text) => Show(text, warning: false, "Game.UI.Notify");
 
-                static void Show(string text, Action<UILog, string> add, string where)
+                /// <summary>弹一行带警告样式的提示，规则同 <see cref="Notify"/>。</summary>
+                public static void Warn(string text) => Show(text, warning: true, "Game.UI.Warn");
+
+                static void Show(string text, bool warning, string where)
                 {
                     if (string.IsNullOrEmpty(text))
                     {
@@ -66,10 +79,17 @@ namespace Polaris
 
                     try
                     {
-                        UILog log = UILog.Instance;
-                        if (log != null)
+                        string resolved = PolarisAPI.Localization.Text(text);
+                        if (!TryDeliver(resolved, warning))
                         {
-                            add(log, PolarisAPI.Localization.Text(text));
+                            lock (pending)
+                            {
+                                pending.Enqueue((resolved, warning));
+                                while (pending.Count > MaxPending)
+                                {
+                                    pending.Dequeue();
+                                }
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -77,8 +97,64 @@ namespace Polaris
                         Errors.Report(ex, where);
                     }
                 }
-            }
 
+                /// <summary>先试游戏里的提示行，不行再试后端；都不行返回 false。</summary>
+                static bool TryDeliver(string text, bool warning)
+                {
+                    UILog log = Safe(static () => UILog.Instance, null);
+                    if (log != null)
+                    {
+                        if (warning)
+                        {
+                            log.AddAlert(text);
+                        }
+                        else
+                        {
+                            log.AddLog(text);
+                        }
+
+                        return true;
+                    }
+
+                    INoticeBackend target = backend;
+                    if (target != null)
+                    {
+                        target.Show(text, warning);
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                /// <summary>把攒着的提示尽量弹出去；由 Core 的 Update 每帧调用。</summary>
+                internal static void Flush()
+                {
+                    lock (pending)
+                    {
+                        while (pending.Count > 0)
+                        {
+                            (string text, bool warning) = pending.Peek();
+                            bool delivered;
+                            try
+                            {
+                                delivered = TryDeliver(text, warning);
+                            }
+                            catch (Exception ex)
+                            {
+                                Errors.Report(ex, "Game.UI.Flush");
+                                delivered = true;
+                            }
+
+                            if (!delivered)
+                            {
+                                return;
+                            }
+
+                            pending.Dequeue();
+                        }
+                    }
+                }
+            }
 
             public static class Input
             {
