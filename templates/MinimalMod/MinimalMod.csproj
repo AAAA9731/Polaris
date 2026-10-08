@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>MinimalMod</AssemblyName>
+    <RootNamespace>MinimalMod</RootNamespace>
+    <Version>0.1.0</Version>
+    <LangVersion>latest</LangVersion>
+    <!-- 构建后自动把产物放进游戏的 BepInEx/plugins/MinimalMod/；不想自动部署就设 false。 -->
+    <DeployToGame Condition="'$(DeployToGame)' == ''">true</DeployToGame>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Unity.Mono" Version="6.0.0-be.*" IncludeAssets="compile" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" IncludeAssets="compile" />
+    <!-- 把游戏程序集里的 internal/private 成员变成可见，写补丁和继承游戏类时不用反射。 -->
+    <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Publicize Include="Assembly-CSharp" />
+    <Publicize Include="unsafeAssem" />
+  </ItemGroup>
+
+  <!-- 游戏自带的程序集只编译期引用（Private=false），不要复制进你的插件目录。 -->
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp"><HintPath>$(AicGameDir)\AliceInCradle_Data\Managed\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="unsafeAssem"><HintPath>$(AicGameDir)\AliceInCradle_Data\Managed\unsafeAssem.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="better"><HintPath>$(AicGameDir)\AliceInCradle_Data\Managed\better.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="pixelliner"><HintPath>$(AicGameDir)\AliceInCradle_Data\Managed\pixelliner.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.InputSystem"><HintPath>$(AicGameDir)\AliceInCradle_Data\Managed\Unity.InputSystem.dll</HintPath><Private>false</Private></Reference>
+    <!-- Polaris 核心库：直接引用游戏里已安装的那份，运行时由 [BepInDependency("Polaris.Core")] 保证先加载。 -->
+    <Reference Include="PolarisCore"><HintPath>$(AicGameDir)\BepInEx\plugins\PolarisCore.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <!-- Publicizer 自带的 IgnoresAccessChecksToAttribute 与 BepInEx 里的重复，去掉免得满屏 CS0436 警告。 -->
+  <Target Name="DropDuplicateIgnoresAccessChecksTo" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Remove="@(Compile)" Condition="'%(Filename)' == 'IgnoresAccessChecksToAttribute'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="DeployToGame" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AicGameDir)\BepInEx\plugins\$(AssemblyName)" />
+  </Target>
+
+</Project>

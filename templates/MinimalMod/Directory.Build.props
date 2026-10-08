@@ -1,0 +1,18 @@
+<Project>
+
+  <!--
+    游戏目录：aic_path.txt 里写一行，游戏根目录（含 AliceInCradle_Data 的那一层）。
+    复制 aic_path.txt.example 为 aic_path.txt 再改；也可命令行 -p:AicGameDir=... 临时覆盖。
+  -->
+  <PropertyGroup>
+    <AicPathFile Condition="'$(AicPathFile)' == ''">$(MSBuildThisFileDirectory)aic_path.txt</AicPathFile>
+    <AicGameDirRaw Condition="'$(AicGameDir)' == '' And Exists('$(AicPathFile)')">$([System.IO.File]::ReadAllText($(AicPathFile)))</AicGameDirRaw>
+    <AicGameDir Condition="'$(AicGameDir)' == '' And '$(AicGameDirRaw)' != ''">$(AicGameDirRaw.Trim().Trim('"'))</AicGameDir>
+  </PropertyGroup>
+
+  <Target Name="CheckAicGameDir" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="'$(AicGameDir)' == '' Or !Exists('$(AicGameDir)\AliceInCradle_Data\Managed')"
+           Text="找不到游戏目录：把 aic_path.txt.example 复制成 aic_path.txt，里面写游戏根目录（含 AliceInCradle_Data 的那一层）。" />
+  </Target>
+
+</Project>
