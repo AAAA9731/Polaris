@@ -495,6 +495,22 @@ namespace Polaris.Diagnostics
 
                     x -= 10f;
                 }
+
+                // Esc 等同点最后一个按钮（约定为取消）。
+                if (live && item.DyingAt < 0f && item.Buttons.Count > 0
+                    && Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+                {
+                    Event.current.Use();
+                    try
+                    {
+                        item.Buttons[item.Buttons.Count - 1].OnClick();
+                    }
+                    catch (Exception)
+                    {
+                    }
+
+                    item.DyingAt = Time.realtimeSinceStartup;
+                }
             }
             else
             {

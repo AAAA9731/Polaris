@@ -70,6 +70,54 @@ namespace Polaris
                 /// <summary>弹一行带警告样式的提示，规则同 <see cref="Notify"/>。</summary>
                 public static void Warn(string text) => Show(text, warning: true, "Game.UI.Warn");
 
+                /// <summary>
+                /// 弹一个需要玩家确认的框：点"确定"调 <paramref name="onConfirm"/>，点"取消"或按 Esc 调 <paramref name="onCancel"/>。
+                /// 只是告知用 <see cref="Notify"/>；这个是给"要玩家做决定"的场合（比如不可恢复的操作）。
+                /// 没有可用的后端（没装 ModManager 且不在 <see cref="SetBackend"/> 接入的界面里）时，当作玩家取消，并记一条警告。
+                /// </summary>
+                /// <param name="text">正文；<c>&amp;</c> 开头当本地化键</param>
+                /// <param name="title">标题，缺省为"请确认"</param>
+                /// <param name="confirmLabel">确定按钮文案，缺省为"确定"</param>
+                /// <param name="cancelLabel">取消按钮文案，缺省为"取消"</param>
+                public static void Confirm(string text, Action onConfirm, Action onCancel = null,
+                                           string title = null, string confirmLabel = null, string cancelLabel = null)
+                {
+                    string resolvedText = PolarisAPI.Localization.Text(text ?? "");
+                    string resolvedTitle = PolarisAPI.Localization.Text(title) ?? PolarisAPI.Localization.Pick("请确认", "Please confirm", "確認");
+                    string ok = PolarisAPI.Localization.Text(confirmLabel) ?? PolarisAPI.Localization.Pick("确定", "OK", "OK");
+                    string cancel = PolarisAPI.Localization.Text(cancelLabel) ?? PolarisAPI.Localization.Pick("取消", "Cancel", "キャンセル");
+
+                    INoticeBackend target = backend;
+                    if (target == null)
+                    {
+                        CorePlugin.Logger?.LogWarning("[Polaris] Game.UI.Confirm has no backend to show the dialog (ModManager not installed?); treating it as cancelled.");
+                        InvokeGuarded(onCancel, "Game.UI.Confirm cancel callback");
+                        return;
+                    }
+
+                    try
+                    {
+                        target.Confirm(resolvedTitle, resolvedText, ok, cancel, onConfirm, onCancel);
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.Report(ex, "Game.UI.Confirm");
+                        InvokeGuarded(onCancel, "Game.UI.Confirm cancel callback");
+                    }
+                }
+
+                static void InvokeGuarded(Action action, string where)
+                {
+                    try
+                    {
+                        action?.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.Report(ex, where, action?.Method?.DeclaringType?.Assembly);
+                    }
+                }
+
                 static void Show(string text, bool warning, string where)
                 {
                     if (string.IsNullOrEmpty(text))

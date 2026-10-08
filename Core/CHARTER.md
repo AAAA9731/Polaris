@@ -12,7 +12,7 @@ Core（`PolarisCore.dll`）是给《Alice in Cradle》BepInEx 模组作者铺的
 | 本地化 | `PolarisAPI.Localization` | 文案键、文案文件、多语言 |
 | 菜单 | `MainMenu` / `GameMenu` | 标题菜单按钮、暂停菜单分类 |
 | 资源 | `Res` | 图片、音频、PXLS 的加载与缓存 |
-| 输入与提示 | `Game.Input` / `Game.UI` | 可改键的热键、给玩家一行提示 |
+| 输入与提示 | `Game.Input` / `Game.UI` | 可改键的热键、给玩家一行提示（`Notify`/`Warn`）、需要玩家做决定时的确认框（`Confirm`） |
 | 基础设施 | `PolarisMod`、`Patching`、`Errors`、`Paths` | 安全打补丁、异常不拖垮游戏、目录约定 |
 | 游戏门面 | `PolarisAPI.Game` | 对原版对象的安全只读访问 |
 
