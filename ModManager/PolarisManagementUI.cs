@@ -447,6 +447,9 @@ namespace Polaris
 
                     // 登记这一行的显隐开关；搜索过滤就是拨它，而不是重建页面（理由见 Filter）。
                     rowMems.Add(new ModRow(box.getRowManager().getBlockMemory(rowButton), record));
+
+                    // 一个模组一行：不显式换行的话，设计器会把放得下的按钮挤到同一行。
+                    box.Br();
                 }
             }
 
