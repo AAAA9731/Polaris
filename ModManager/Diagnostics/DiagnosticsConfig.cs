@@ -70,8 +70,7 @@ namespace Polaris.Diagnostics
 
             try
             {
-                Directory.CreateDirectory(DiagnosticsRuntime.ConfigDir);
-                file = new ConfigFile(Path.Combine(DiagnosticsRuntime.ConfigDir, FileName), saveOnInit: false);
+                file = PolarisAPI.Paths.OpenConfig(FileName);
                 file.SaveOnConfigSet = false;
 
                 enabled = file.Bind(WatchdogSection, "Enabled", DefaultEnabled,

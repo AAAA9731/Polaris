@@ -29,8 +29,7 @@ namespace Polaris
 
                 try
                 {
-                    Directory.CreateDirectory(PolarisAPI.Paths.ConfigDir);
-                    file = new ConfigFile(Path.Combine(PolarisAPI.Paths.ConfigDir, FileName), saveOnInit: true);
+                    file = PolarisAPI.Paths.OpenConfig(FileName, saveOnInit: true);
                 }
                 catch (Exception e)
                 {

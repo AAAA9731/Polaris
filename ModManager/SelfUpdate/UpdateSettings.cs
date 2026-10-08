@@ -25,9 +25,7 @@ namespace Polaris.SelfUpdate
 
             try
             {
-                string dir = Diagnostics.DiagnosticsRuntime.ConfigDir;
-                Directory.CreateDirectory(dir);
-                var file = new ConfigFile(Path.Combine(dir, FileName), saveOnInit: false);
+                var file = PolarisAPI.Paths.OpenConfig(FileName);
                 file.SaveOnConfigSet = false;
 
 

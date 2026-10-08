@@ -110,12 +110,9 @@ namespace Polaris.Settings
                 return existing;
             }
 
-            Directory.CreateDirectory(PolarisAPI.Paths.ConfigDir);
-            var file = new ConfigFile(Path.Combine(PolarisAPI.Paths.ConfigDir, modId + ".cfg"), saveOnInit: true)
-            {
-                // 见类注释：写盘时机由 Commit 决定，不能每次赋值都写。
-                SaveOnConfigSet = false,
-            };
+            var file = PolarisAPI.Paths.OpenConfig(modId + ".cfg", saveOnInit: true);
+            // 见类注释：写盘时机由 Commit 决定，不能每次赋值都写。
+            file.SaveOnConfigSet = false;
             files[modId] = file;
             return file;
         }

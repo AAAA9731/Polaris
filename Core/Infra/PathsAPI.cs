@@ -48,6 +48,18 @@ namespace Polaris.Infra
             return Path.Combine(string.IsNullOrEmpty(directory) ? "." : directory, name);
         }
 
+        /// <summary>
+        /// 在 <see cref="ConfigDir"/> 里打开（必要时建出）一个 BepInEx 配置文件，让各模组的配置文件都落在同一处。
+        /// 目录建不出或文件打不开时直接抛异常，由调用方决定怎么降级。
+        /// </summary>
+        /// <param name="fileName">文件名，如 <c>mymod.cfg</c></param>
+        /// <param name="saveOnInit">打开时是否立即写盘（把缺失的条目补进文件）</param>
+        public BepInEx.Configuration.ConfigFile OpenConfig(string fileName, bool saveOnInit = false)
+        {
+            Directory.CreateDirectory(ConfigDir);
+            return new BepInEx.Configuration.ConfigFile(Path.Combine(ConfigDir, fileName), saveOnInit);
+        }
+
         /// <summary>幂等创建各目录；由 <see cref="Plugin"/> 在 Awake 阶段尽早调用一次。</summary>
         public void EnsureDirectories()
         {

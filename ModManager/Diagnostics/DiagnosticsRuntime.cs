@@ -25,12 +25,12 @@ namespace Polaris.Diagnostics
         internal static string PluginVersion { get; private set; }
         internal static string ReportTarget { get; private set; }
 
-        internal static string PluginsRoot => Paths.PluginPath;
-        internal static string PolarisRoot => Path.Combine(PluginsRoot, "Polaris");
-        internal static string LibsDir => Path.Combine(PolarisRoot, "libs");
-        internal static string ConfigDir => Path.Combine(Paths.ConfigPath, "Polaris");
-        internal static string StateDir => Path.Combine(Paths.BepInExRootPath, "Polaris");
-        internal static string ReportsDir => Path.Combine(StateDir, "reports");
+        internal static string PluginsRoot => PolarisAPI.Paths.PluginsRoot;
+        internal static string PolarisRoot => PolarisAPI.Paths.PolarisRoot;
+        internal static string LibsDir => PolarisAPI.Paths.LibsDir;
+        internal static string ConfigDir => PolarisAPI.Paths.ConfigDir;
+        internal static string StateDir => PolarisAPI.Paths.StateDir;
+        internal static string ReportsDir => PolarisAPI.Paths.ReportsDir;
 
         internal static IEnumerable<PluginInfo> Plugins
             => UnityChainloader.Instance?.Plugins.Values ?? Enumerable.Empty<PluginInfo>();
