@@ -72,6 +72,33 @@ namespace Polaris.Settings
     }
 
     /// <summary>
+    /// 标在静态无参方法上，在设置页画一行按钮，点一下执行该方法（"重置"、"打开配置文件夹"之类）。
+    /// 须与 <see cref="PolarisSettingAttribute"/> 字段在同一个带 <see cref="PolarisSettingGroupAttribute"/> 的类里；
+    /// 同组里按钮排在所有字段之后，按钮之间按 <see cref="Order"/>、再按声明顺序。
+    /// 按钮没有值，不持久化，方法抛异常会被接住并上报，不会影响设置页。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+    public sealed class PolarisButtonAttribute : Attribute
+    {
+        public PolarisButtonAttribute(string label) => Label = label;
+
+        /// <summary>按钮上显示的文字；<c>&amp;</c> 开头视为本地化键。</summary>
+        public string Label { get; }
+
+        /// <summary>标识；缺省取方法名。</summary>
+        public string Id { get; set; }
+
+        /// <summary>悬停时右侧说明框的文字；<c>&amp;</c> 开头视为本地化键。</summary>
+        public string Desc { get; set; }
+
+        /// <summary>按钮之间的排序权重，小的在前。</summary>
+        public int Order { get; set; }
+
+        /// <summary>显示条件，规则同 <see cref="PolarisSettingAttribute.VisibleWhen"/>。</summary>
+        public string VisibleWhen { get; set; }
+    }
+
+    /// <summary>
     /// 标在静态类上，声明这个类里所有 <see cref="PolarisSettingAttribute"/> 字段属于哪个模组分区。
     /// <see cref="SettingsAttributeScanner"/> 会在 <c>Plugin.Start</c> 阶段自动扫描并注册。
     /// </summary>

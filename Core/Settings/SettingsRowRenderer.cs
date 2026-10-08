@@ -65,6 +65,10 @@ namespace Polaris.Settings
                     TextField(box, s, row);
                     break;
 
+                case ButtonSetting s:
+                    ButtonRow(cfg, box, s, row);
+                    break;
+
                 default:
                     CorePlugin.Logger.LogWarning($"[Polaris.Settings] Unrecognized setting type {setting.GetType().Name}; skipped.");
                     break;
@@ -107,6 +111,32 @@ namespace Polaris.Settings
 
             row.Add(meter);
             row.Add(meter.getCtSetter());
+        }
+
+        static void ButtonRow(UiCFG cfg, UiBoxDesigner box, ButtonSetting s, SettingsSearchFilter.RowRecorder row)
+        {
+            row.Add(box.addButtonT<aBtnNel>(new DsnDataButton
+            {
+                name = s.RowKey,
+                title = s.DisplayLabel,
+                w = LabelWidth + SetterWidthChoices,
+                h = 26f,
+                fnClick = _ =>
+                {
+                    // 点击由引擎直接调委托，异常须在这里接住，否则会从按钮点击处理里抛出去。
+                    try
+                    {
+                        s.Click();
+                    }
+                    catch (Exception e)
+                    {
+                        PolarisAPI.Errors.Report(e, $"the click of settings button {s.RowKey}", s.Click.Method?.DeclaringType?.Assembly);
+                    }
+
+                    return true;
+                },
+                fnHover = button => PolarisSettingsScreen.ShowDescription(cfg, button, s.DisplayDescription),
+            }));
         }
 
         static void TextField(UiBoxDesigner box, TextSetting s, SettingsSearchFilter.RowRecorder row)

@@ -276,4 +276,16 @@ namespace Polaris.Settings
         public int MaxLength { get; internal set; } = -1;
         public float Width { get; internal set; } = 220f;
     }
+
+    /// <summary>按钮行：没有值，点击执行一个动作。</summary>
+    public sealed class ButtonSetting : SettingDefinition
+    {
+        internal ButtonSetting(string id, string label, Action click) : base(id, label)
+        {
+            Click = click;
+        }
+
+        /// <summary>点击时执行的动作。</summary>
+        public Action Click { get; }
+    }
 }

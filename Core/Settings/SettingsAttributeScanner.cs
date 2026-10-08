@@ -55,7 +55,16 @@ namespace Polaris.Settings
                     .ThenBy(x => x.Field.MetadataToken)
                     .ToList();
 
-            if (fields.Count == 0)
+            List<(MethodInfo Method, PolarisButtonAttribute Attr)> buttons =
+                type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                    .Select(m => (Method: m, Attr: (PolarisButtonAttribute)Attribute.GetCustomAttribute(
+                        m, typeof(PolarisButtonAttribute))))
+                    .Where(x => x.Attr != null)
+                    .OrderBy(x => x.Attr.Order)
+                    .ThenBy(x => x.Method.MetadataToken)
+                    .ToList();
+
+            if (fields.Count == 0 && buttons.Count == 0)
             {
                 CorePlugin.Logger.LogWarning(
                     $"[Polaris.Settings] {type.FullName} is marked PolarisSettingGroup but has no PolarisSetting fields.");
@@ -118,6 +127,33 @@ namespace Polaris.Settings
                 }
 
                 added++;
+            }
+
+            foreach ((MethodInfo method, PolarisButtonAttribute attr) in buttons)
+            {
+                if (method.GetParameters().Length != 0 || method.ReturnType != typeof(void))
+                {
+                    CorePlugin.Logger.LogWarning(
+                        $"[Polaris.Settings] {type.FullName}.{method.Name} is marked PolarisButton but is not 'static void M()'; skipped.");
+                    continue;
+                }
+
+                try
+                {
+                    string id = string.IsNullOrEmpty(attr.Id) ? method.Name : attr.Id;
+                    string label = string.IsNullOrEmpty(attr.Label) ? method.Name : attr.Label;
+                    ButtonSetting button = builder.Button(id, label, () => Invoke(method, null), attr.Desc);
+                    if (!string.IsNullOrEmpty(attr.VisibleWhen))
+                    {
+                        button.VisibleWhen = ResolveCondition(type, attr.VisibleWhen);
+                    }
+
+                    added++;
+                }
+                catch (Exception e)
+                {
+                    CorePlugin.Logger.LogError($"[Polaris.Settings] Failed to register {type.FullName}.{method.Name}; skipped: {e.Message}");
+                }
             }
 
             if (added == 0)

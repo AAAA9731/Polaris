@@ -122,6 +122,15 @@ namespace Polaris.Settings
             return Add(new TextSetting(id, label, def) { MaxLength = maxLength, Width = width }, desc);
         }
 
+        /// <summary>按钮行，点击执行 <paramref name="click"/>。</summary>
+        public ButtonSetting Button(string id, string label, Action click, string desc = null)
+        {
+            var s = new ButtonSetting(id, label, click ?? throw new ArgumentNullException(nameof(click)));
+            s.Description = desc;
+            group.Add(s);
+            return s;
+        }
+
         /// <summary>提交注册；返回时字段已回灌为玩家上次退出时的值。</summary>
         public SettingGroup Register() => PolarisAPI.Settings.Register(group);
 
