@@ -44,4 +44,17 @@ namespace Polaris.Events
             Current = current;
         }
     }
+
+    /// <summary>玩家角色进入地图（读档、切图、传送之后都会触发）；此时玩家对象已建好，适合在它身上挂东西。</summary>
+    public sealed class PlayerAppeared
+    {
+        public nel.PR Player { get; }
+        public Map2d Map { get; }
+
+        public PlayerAppeared(nel.PR player, Map2d map)
+        {
+            Player = player;
+            Map = map;
+        }
+    }
 }

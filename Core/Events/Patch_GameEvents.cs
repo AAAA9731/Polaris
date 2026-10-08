@@ -33,4 +33,15 @@ namespace Polaris.Events
             catch (Exception ex) { PolarisAPI.Errors.Report(ex, "posting MapChanged"); }
         }
     }
+
+    [HarmonyPatch(typeof(PRNoel), nameof(PRNoel.appear))]
+    internal static class Patch_PRNoel_appear
+    {
+        [HarmonyPostfix]
+        static void Postfix(PRNoel __instance, Map2d Mp)
+        {
+            try { PolarisAPI.Events.Post(new PlayerAppeared(__instance, Mp)); }
+            catch (Exception ex) { PolarisAPI.Errors.Report(ex, "posting PlayerAppeared"); }
+        }
+    }
 }

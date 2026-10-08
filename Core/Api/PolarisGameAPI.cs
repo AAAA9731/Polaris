@@ -119,6 +119,9 @@ namespace Polaris
                 /// <summary>取得当前玩家实例；玩家不在场时为 <c>null</c>。</summary>
                 public static PR CurrentPlayer => GameBinding.Player;
 
+                /// <summary>Nel 侧的 M2D（天气、危险度、背包、魔法管理器都挂在它下面）；尚未建好时为 <c>null</c>。</summary>
+                public static NelM2DBase NelM2D => GameBinding.NelM2D;
+
 
             }
         }
