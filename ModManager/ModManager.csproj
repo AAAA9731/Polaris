@@ -6,7 +6,7 @@
     <AssemblyName>ModManager</AssemblyName>
     <RootNamespace>Polaris</RootNamespace>
     <Product>AIC-Polaris-ModManager</Product>
-    <Version>2.0.4</Version>
+    <Version>2.1.0</Version>
     <BepInExPluginGuid>Polaris.ModManager</BepInExPluginGuid>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
