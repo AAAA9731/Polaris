@@ -2,6 +2,7 @@ using System;
 using HarmonyLib;
 using m2d;
 using nel;
+using nel.gm;
 using XX;
 
 namespace Polaris.Events
@@ -42,6 +43,40 @@ namespace Polaris.Events
         {
             try { PolarisAPI.Events.Post(new PlayerAppeared(__instance, Mp)); }
             catch (Exception ex) { PolarisAPI.Errors.Report(ex, "posting PlayerAppeared"); }
+        }
+    }
+
+    [HarmonyPatch(typeof(UiGameMenu), nameof(UiGameMenu.activate))]
+    internal static class Patch_UiGameMenu_activate
+    {
+        [HarmonyPostfix]
+        static void Postfix(UiGameMenu __instance)
+        {
+            try { PolarisAPI.Events.Post(new GameMenuOpened(__instance)); }
+            catch (Exception ex) { PolarisAPI.Errors.Report(ex, "posting GameMenuOpened"); }
+        }
+    }
+
+    [HarmonyPatch(typeof(UiGameMenu), nameof(UiGameMenu.deactivate))]
+    internal static class Patch_UiGameMenu_deactivate
+    {
+        // 原版 deactivate 对已关闭的菜单是空操作，只在真的从开到关时发事件。
+        [HarmonyPrefix]
+        static void Prefix(UiGameMenu __instance, out bool __state)
+        {
+            __state = __instance.isActive();
+        }
+
+        [HarmonyPostfix]
+        static void Postfix(UiGameMenu __instance, bool __state)
+        {
+            if (!__state)
+            {
+                return;
+            }
+
+            try { PolarisAPI.Events.Post(new GameMenuClosed(__instance)); }
+            catch (Exception ex) { PolarisAPI.Errors.Report(ex, "posting GameMenuClosed"); }
         }
     }
 }

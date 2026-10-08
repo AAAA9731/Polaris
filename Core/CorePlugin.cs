@@ -25,6 +25,14 @@ namespace Polaris
             Localization.CoreStrings.Register();
             harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
             PolarisAPI.Patching.ApplyAll(harmony, typeof(CorePlugin).Assembly, Logger);
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnActiveSceneChanged;
+        }
+
+        static void OnActiveSceneChanged(UnityEngine.SceneManagement.Scene previous, UnityEngine.SceneManagement.Scene current)
+        {
+            PolarisAPI.Errors.Guard(
+                () => PolarisAPI.Events.Post(new Events.SceneChanged(previous.name, current.name)),
+                "posting SceneChanged");
         }
 
         /// <summary>所有模组 Awake 之后：扫描设置项（读出玩家存的值）和属性标注的事件订阅。</summary>

@@ -57,4 +57,41 @@ namespace Polaris.Events
             Map = map;
         }
     }
+
+    /// <summary>标题场景的按钮建好了（每个标题场景实例只触发一次，语言切换导致的重建不算）；这时可以动标题界面。</summary>
+    public sealed class TitleReady
+    {
+        public nel.title.SceneTitleTemp Scene { get; }
+
+        public TitleReady(nel.title.SceneTitleTemp scene) => Scene = scene;
+    }
+
+    /// <summary>暂停菜单（游戏菜单）打开了。</summary>
+    public sealed class GameMenuOpened
+    {
+        public nel.gm.UiGameMenu Menu { get; }
+
+        public GameMenuOpened(nel.gm.UiGameMenu menu) => Menu = menu;
+    }
+
+    /// <summary>暂停菜单关闭了。</summary>
+    public sealed class GameMenuClosed
+    {
+        public nel.gm.UiGameMenu Menu { get; }
+
+        public GameMenuClosed(nel.gm.UiGameMenu menu) => Menu = menu;
+    }
+
+    /// <summary>Unity 的活动场景换了（标题 ↔ 游戏等）；名字可能为空（场景刚卸载时）。</summary>
+    public sealed class SceneChanged
+    {
+        public string Previous { get; }
+        public string Current { get; }
+
+        public SceneChanged(string previous, string current)
+        {
+            Previous = previous;
+            Current = current;
+        }
+    }
 }

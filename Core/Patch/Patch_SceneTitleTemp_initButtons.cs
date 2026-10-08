@@ -30,7 +30,17 @@ namespace Polaris.Patch
         static void Postfix(SceneTitleTemp __instance)
         {
             MainMenuAPI.CenterTopRow(__instance);
+
+            // 每个标题场景只报一次；语言切换也会重建按钮，不该再触发。
+            if (!ReferenceEquals(lastReported, __instance))
+            {
+                lastReported = __instance;
+                try { PolarisAPI.Events.Post(new Events.TitleReady(__instance)); }
+                catch (System.Exception ex) { PolarisAPI.Errors.Report(ex, "posting TitleReady"); }
+            }
         }
+
+        static SceneTitleTemp lastReported;
 
         /// <summary>
         /// 原方法按固定 4 按钮硬编码容器定位/高度、列数、按钮宽度分母、列表容量，这里改为按
