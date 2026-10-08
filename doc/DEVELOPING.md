@@ -6,23 +6,20 @@
 
 | 部分 | 位置 | 作用 |
 |---|---|---|
-| PolarisCore（BepInEx 插件） | 仓库根目录 | 游戏内：管理、诊断、自动更新，以及本功能分支合并的少量游戏／资源／存档 API |
+| PolarisLib（BepInEx 插件，GUID `Polaris.Lib`） | `Lib/` | **辅助库**：给其它模组用的 API——设置项、存档分区、事件总线、本地化、主菜单按钮、资源加载（贴图/音频/PXLS）、基础错误上报。不含任何界面产品或诊断逻辑 |
+| PolarisCore（BepInEx 插件，GUID `Polaris`） | `Manager/` | **管理器产品**：错误捕获与归因、阶梯式提示、标题画面的模组管理页、自动更新。依赖 PolarisLib（`[BepInDependency]`），并把自己接成库 `Errors` 的后端 |
 | PolarisWatcher（独立小程序，.NET Framework 4.8） | `Watcher/` | 游戏退出后：弹出崩溃原因窗口、应用已下载的更新 |
 | PolarisInstaller（WPF 单文件安装器） | `Installer/` | 安装、更新、卸载 BepInEx 与 Polaris；嵌入了 BepInEx 文件和刚构建好的插件与 Watcher |
+
+依赖方向只有一个：Manager → Lib。库不引用管理器；库里需要管理器才有的能力（归因、报告、卡死检测）时，通过 `IErrorBackend` 这类接口由管理器注入。管理器页面不列出库本身（库是管理器的依赖，禁用它等于禁用管理器）。
+
+PolarisCore 这个程序集名与 GUID 沿用旧版，是为了让已安装玩家的自动更新链路不用改动。
 
 ## 目录结构
 
 ```
-Diagnostics/     诊断：捕获、归因、看门狗、会话哨兵、严重度策略、游戏内提示、模组标记
-SelfUpdate/      游戏内自动更新
-Contracts/       诊断的公开数据类型
-Api/             少量游戏入口（直接使用游戏原版类型）
-Resources/       固定目录的图片、WAV/OGG、PXLS 加载与释放
-Save/            一次显式注册，JSON 数据随原版存档保存／加载；复用旧尾部容器与存档挂接
-Infra/           错误、健康、路径等基础设施
-Settings/        设置项框架：给静态字段标 `[PolarisSetting]` 即可渲染进原版设置界面并自动保存；`PolarisSettings.cs` 是 Polaris 自己的设置项
-Patch/           标题画面补丁（模组管理页入口、告知页）与设置界面（UiCFG）补丁
-Localization/    内置三语文案（含设置项文案）
+Lib/             库：Api（精简的游戏查询）、Events、Save、Settings、Resources、Localization、Infra、Patch（设置界面/主菜单）
+Manager/         管理器：Diagnostics、Contracts、SelfUpdate、Localization（管理器文案）、Patch（标题画面）、模组管理页等 UI
 Watcher/         PolarisWatcher.exe
 Installer/       PolarisInstaller（Payload/ 里是随包分发的 BepInEx 文件）
 tools/           pack-managed.ps1（打包游戏程序集）、ci-smoke.ps1（安装器冒烟测试）
@@ -33,7 +30,7 @@ doc/legacy/      旧库的规格与设计文档
 ## 本地构建
 
 1. 在仓库**上一级目录**创建 `aic_path.txt`，单行写游戏根目录（含 `AliceInCradle_Data` 的那一层）。
-2. 构建插件：`dotnet build PolarisCore.csproj`
+2. 构建插件：`dotnet build Manager/PolarisCore.csproj`（会连带构建 `Lib/PolarisLib.csproj`）
 3. 构建崩溃观察者：`dotnet build Watcher/PolarisWatcher.csproj`
 4. 发布安装器：运行 `Installer/publish.ps1`。它会先构建上面两项并嵌入，产物是 `Installer/publish/PolarisInstaller.exe`。
 
@@ -66,7 +63,7 @@ PolarisInstaller.exe --silent install|uninstall --game "<游戏目录>" [--remov
 
 ### 发布一个版本
 
-1. 修改 `PolarisCore.csproj` 里的 `<Version>`，提交并推送。
+1. 修改 `Manager/PolarisCore.csproj` 里的 `<Version>`，提交并推送。
 2. 打标签并推送：`git tag v2.0.1 && git push origin v2.0.1`。标签必须与 `<Version>` 一致，否则发布会被拦下；带 `-` 的标签（如 `v2.1.0-rc1`）会标为预发布。
 3. 发布完成后，建议手写一下发布说明（`gh release edit <标签> --notes "..."`）。游戏内的更新弹窗会显示说明的前几行。
 
@@ -93,7 +90,7 @@ PolarisInstaller.exe --silent install|uninstall --game "<游戏目录>" [--remov
 
 ## 设置界面的 Polaris 标签页
 
-在 ver030i 中，现有补丁将 `UiCFG` 构造函数的标签页数量从 7 改为 8，以 `CATEG._MAX` 建出第八页，再填入 Polaris 和模组的设置项。标签图标是 ✴，页眉标题是“Polaris 设置”。实现见 `Patch/Patch_UiCFG_PolarisTab.cs`；本次合并沿用这套实现。构造函数的 IL 匹配未成功时，设置项回退到“常规”页尾部。
+在 ver030i 中，现有补丁将 `UiCFG` 构造函数的标签页数量从 7 改为 8，以 `CATEG._MAX` 建出第八页，再填入 Polaris 和模组的设置项。标签图标是 ✴，页眉标题是“Polaris 设置”。实现见 `Lib/Patch/Patch_UiCFG_PolarisTab.cs`；本次合并沿用这套实现。构造函数的 IL 匹配未成功时，设置项回退到“常规”页尾部。
 
 ## 旧代码
 

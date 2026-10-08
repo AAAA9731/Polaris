@@ -23,7 +23,7 @@ function Assert($cond, $msg) { if (-not $cond) { throw "断言失败：$msg" } }
 Run "install"
 Assert (Test-Path "$fake\BepInEx\plugins\PolarisCore.dll") "PolarisCore.dll 已安装"
 Assert (Test-Path "$fake\BepInEx\plugins\Polaris\PolarisWatcher.exe") "PolarisWatcher.exe 已安装"
-$dependencies = @('NVorbis.dll', 'System.Buffers.dll', 'System.Memory.dll', 'System.Numerics.Vectors.dll', 'System.Runtime.CompilerServices.Unsafe.dll')
+$dependencies = @('PolarisLib.dll', 'NVorbis.dll', 'System.Buffers.dll', 'System.Memory.dll', 'System.Numerics.Vectors.dll', 'System.Runtime.CompilerServices.Unsafe.dll')
 foreach ($dependency in $dependencies) {
     Assert (Test-Path "$fake\BepInEx\plugins\Polaris\$dependency") "$dependency 已安装"
 }

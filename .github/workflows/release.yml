@@ -30,10 +30,10 @@ jobs:
         shell: bash
         run: |
           tag="${GITHUB_REF_NAME#v}"
-          version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' PolarisCore.csproj | head -1)"
+          version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Manager/PolarisCore.csproj | head -1)"
           echo "tag=$tag csproj=$version"
           if [ "$tag" != "$version" ]; then
-            echo "::error::标签 $GITHUB_REF_NAME 与 PolarisCore.csproj 的 <Version> ($version) 不一致"
+            echo "::error::标签 $GITHUB_REF_NAME 与 Manager/PolarisCore.csproj 的 <Version> ($version) 不一致"
             exit 1
           fi
 
