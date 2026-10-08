@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using BepInEx.Unity.Mono.Bootstrap;
 
@@ -34,6 +35,21 @@ namespace Polaris
         }
 
         /// <summary>丢弃缓存，下次 <see cref="Resolve"/> 时重新扫描已加载插件。</summary>
+        /// <summary>BepInEx 当前已加载的全部插件所在的 dll 路径。</summary>
+        internal static IEnumerable<string> LoadedPluginLocations()
+        {
+            if (UnityChainloader.Instance == null)
+            {
+                return [];
+            }
+
+            return UnityChainloader.Instance.Plugins.Values
+                .Select(p => p.Location)
+                .Where(l => !string.IsNullOrEmpty(l))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         internal static void Invalidate()
         {
             byFileName = null;

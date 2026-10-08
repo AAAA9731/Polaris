@@ -25,7 +25,19 @@ namespace Polaris
                 return [];
             }
 
-            foreach (string path in Directory.GetFiles(PolarisAPI.Paths.PluginsRoot, "*.dll*", SearchOption.TopDirectoryOnly))
+            string root = PolarisAPI.Paths.PluginsRoot;
+            string polarisRoot = PolarisAPI.Paths.PolarisRoot;
+
+            // 根目录下的 dll 一律列出（启用的和 .disabled 的）。
+            var candidates = Directory.GetFiles(root, "*.dll*", SearchOption.TopDirectoryOnly).ToList();
+
+            // 放在子文件夹里的模组（如 plugins/SomeMod/SomeMod.dll）：启用的以 BepInEx 实际加载的插件为准，
+            // 免得把同文件夹里的依赖库（Newtonsoft.Json.dll 之类）也当成模组；被禁用的没加载过，只能认 .dll.disabled 后缀。
+            candidates.AddRange(PolarisModInfoResolver.LoadedPluginLocations().Where(p => IsInSubfolder(p, root, polarisRoot)));
+            candidates.AddRange(Directory.GetFiles(root, "*.dll" + DisabledSuffix, SearchOption.AllDirectories)
+                .Where(p => IsInSubfolder(p, root, polarisRoot)));
+
+            foreach (string path in candidates)
             {
                 string fileName = Path.GetFileName(path);
                 bool isDisabled = fileName.EndsWith(".dll" + DisabledSuffix, StringComparison.OrdinalIgnoreCase);
@@ -35,24 +47,31 @@ namespace Polaris
                     continue;
                 }
 
-                string displayName = isDisabled
+                string enabledFileName = isDisabled
                     ? fileName.Substring(0, fileName.Length - DisabledSuffix.Length)
                     : fileName;
 
                 // 管理器自己不列出：禁用它，这个页面本身就没了，玩家无从再启用。
-                if (string.Equals(displayName, selfFileName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(enabledFileName, selfFileName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
+
+                // 记录的键是相对 plugins 根的路径：根目录里就是文件名，子文件夹里带上文件夹，避免不同文件夹的同名 dll 串到一起。
+                string directory = Path.GetDirectoryName(Path.GetFullPath(path));
+                string enabledPath = Path.Combine(directory, enabledFileName);
+                string displayName = IsRoot(directory, root)
+                    ? enabledFileName
+                    : GetRelativePath(root, enabledPath);
 
                 if (!byDisplayName.TryGetValue(displayName, out UserModRecord record))
                 {
                     record = new UserModRecord
                     {
                         DisplayName = displayName,
-                        EnabledPath = Path.Combine(PolarisAPI.Paths.PluginsRoot, displayName),
-                        DisabledPath = Path.Combine(PolarisAPI.Paths.PluginsRoot, displayName + DisabledSuffix),
-                        Info = PolarisModInfoResolver.Resolve(displayName),
+                        EnabledPath = enabledPath,
+                        DisabledPath = enabledPath + DisabledSuffix,
+                        Info = PolarisModInfoResolver.Resolve(enabledFileName),
                         IsCore = string.Equals(displayName, coreFileName, StringComparison.OrdinalIgnoreCase),
                     };
                     byDisplayName[displayName] = record;
@@ -69,6 +88,22 @@ namespace Polaris
         }
 
         /// <summary>把文件改名到目标启停状态；已在目标状态直接返回成功，失败记到 <see cref="UserModRecord.Error"/> 并记日志，不抛异常。</summary>
+        static bool IsRoot(string directory, string root) =>
+            string.Equals(Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>在 plugins 根的子文件夹里，且不在 Polaris 自己的支持文件夹里。</summary>
+        static bool IsInSubfolder(string path, string root, string polarisRoot)
+        {
+            string full = Path.GetFullPath(path);
+            string directory = Path.GetDirectoryName(full);
+            return !IsRoot(directory, root)
+                && full.StartsWith(Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                && !full.StartsWith(Path.GetFullPath(polarisRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        }
+
+        static string GetRelativePath(string root, string path) =>
+            Path.GetFullPath(path).Substring(Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Length + 1);
+
         internal static bool SetEnabled(UserModRecord record, bool enabled)
         {
             if (record.IsCore)
