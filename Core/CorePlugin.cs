@@ -45,6 +45,7 @@ namespace Polaris
         private void Update()
         {
             Res.Runtime.MainThreadDispatcher.Drain();
+            API.Hotkeys.Tick();
             Res.Runtime.PxlsPump.Advance();
         }
 

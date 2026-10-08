@@ -3,6 +3,7 @@ using m2d;
 using nel;
 using Polaris.API;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using XX;
 
 namespace Polaris
@@ -87,6 +88,27 @@ namespace Polaris
                 /// <summary>获取本帧鼠标滚轮的滚动量。</summary>
                 public static Vector2 MouseWheelDelta => Safe(static () => (Vector2)IN.MouseWheel, Vector2.zero);
 
+
+                /// <summary>该键本帧刚按下；玩家正在输入框里打字时恒为 false（和原版快捷键一样不抢输入）。</summary>
+                public static bool WasPressed(Key key) => Safe(() => IN.getKD(key), false);
+
+                /// <summary>该键正被按住；输入框里打字时恒为 false。</summary>
+                public static bool IsHeld(Key key) => Safe(() => IN.getK(key), false);
+
+                /// <summary>该键本帧刚松开；输入框里打字时恒为 false。</summary>
+                public static bool WasReleased(Key key) => Safe(() => IN.getKU(key), false);
+
+                /// <summary>
+                /// 绑定一个热键：每帧检查 <paramref name="key"/> 当前返回的键，按下就执行 <paramref name="onPressed"/>。
+                /// 键用回调给出，配合 <c>[PolarisSetting] static Key</c> 字段就能让玩家在设置页改键（<c>Bind(() =&gt; MyConfig.Hotkey, ...)</c>），改完立即生效。
+                /// 键为 <c>Key.None</c> 时不触发；回调抛异常会被接住并上报。
+                /// </summary>
+                /// <returns>解除绑定的句柄，Dispose 即取消</returns>
+                public static IDisposable Bind(Func<Key> key, Action onPressed)
+                {
+                    return Hotkeys.Add(key ?? throw new ArgumentNullException(nameof(key)),
+                                       onPressed ?? throw new ArgumentNullException(nameof(onPressed)));
+                }
 
                 /// <summary>清除指定输入动作的当前按键状态；<paramref name="onlyPressDown"/> 为真时只清"刚按下"沿，保留持续按住状态。</summary>
                 public static void ClearState(string key, bool onlyPressDown = true)
