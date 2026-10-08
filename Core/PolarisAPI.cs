@@ -1,9 +1,12 @@
-﻿namespace Polaris
+namespace Polaris
 {
     public static partial class PolarisAPI
     {
         /// <summary>主菜单按钮相关 API。</summary>
         public static MainMenuAPI MainMenu { get; } = new();
+
+        /// <summary>游戏内暂停菜单的自定义分类。</summary>
+        public static GameMenuAPI GameMenu { get; } = new();
 
         /// <summary>设置项相关 API：声明的设置项会渲染进原版设置界面并自动持久化。</summary>
         public static Settings.SettingsAPI Settings { get; } = new();
