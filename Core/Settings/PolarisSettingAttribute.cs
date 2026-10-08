@@ -62,6 +62,13 @@ namespace Polaris.Settings
         /// 触发于玩家改动的每一步及取消回滚，但启动加载配置时不触发——那用 <see cref="PolarisSettingGroupAttribute.OnLoaded"/>。
         /// </summary>
         public string OnChanged { get; set; }
+
+        /// <summary>
+        /// 决定这一行是否显示的静态成员名（同类中查找：<c>static bool</c> 的方法、属性或字段）。
+        /// 每次设置界面搭建时求值一次，返回 false 就不画这一行（也不会被搜索到）；一个分区的行全被隐藏则整个分区不显示。
+        /// 只管显隐——值照常加载、持久化，隐藏时字段里仍是玩家存的值。
+        /// </summary>
+        public string VisibleWhen { get; set; }
     }
 
     /// <summary>

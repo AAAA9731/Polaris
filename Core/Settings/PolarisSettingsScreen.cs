@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using nel;
 using UnityEngine;
 using XX;
@@ -67,10 +68,16 @@ namespace Polaris.Settings
             {
                 try
                 {
+                    List<SettingDefinition> visible = group.Settings.Where(s => s.IsVisible).ToList();
+                    if (visible.Count == 0)
+                    {
+                        continue;
+                    }
+
                     SettingsSearchFilter.GroupRecorder recorder = SettingsSearchFilter.OpenGroup(group);
                     GroupHeader(box, group, recorder, skipRule: ownTab && first);
                     first = false;
-                    foreach (SettingDefinition setting in group.Settings)
+                    foreach (SettingDefinition setting in visible)
                     {
                         SettingsRowRenderer.Render(cfg, box, setting, recorder.OpenRow(setting));
                         rendered.Add(setting);

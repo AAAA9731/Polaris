@@ -112,6 +112,11 @@ namespace Polaris.Settings
                     }
                 }
 
+                if (!string.IsNullOrEmpty(attr.VisibleWhen))
+                {
+                    setting.VisibleWhen = ResolveCondition(type, attr.VisibleWhen);
+                }
+
                 added++;
             }
 
@@ -170,6 +175,34 @@ namespace Polaris.Settings
             CorePlugin.Logger.LogError(
                 $"[Polaris.Settings] Could not find the static method {methodName} named by OnChanged in {owner.FullName}. " +
                 "The signature must be static void M() or static void M(T value). The change callback for this entry will not take effect.");
+            return null;
+        }
+
+        /// <summary>解析 <see cref="PolarisSettingAttribute.VisibleWhen"/>：<c>static bool</c> 的方法 / 属性 / 字段都行；找不到只记错误，该项照常显示。</summary>
+        static Func<bool> ResolveCondition(Type owner, string memberName)
+        {
+            const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+
+            MethodInfo method = owner.GetMethod(memberName, flags, null, Type.EmptyTypes, null);
+            if (method != null && method.ReturnType == typeof(bool))
+            {
+                return (Func<bool>)Delegate.CreateDelegate(typeof(Func<bool>), method);
+            }
+
+            PropertyInfo property = owner.GetProperty(memberName, flags);
+            if (property != null && property.PropertyType == typeof(bool) && property.GetMethod != null)
+            {
+                return (Func<bool>)Delegate.CreateDelegate(typeof(Func<bool>), property.GetMethod);
+            }
+
+            FieldInfo field = owner.GetField(memberName, flags);
+            if (field != null && field.FieldType == typeof(bool))
+            {
+                return () => (bool)field.GetValue(null);
+            }
+
+            CorePlugin.Logger.LogError(
+                $"[Polaris.Settings] Could not find a static bool method/property/field named {memberName} (VisibleWhen) in {owner.FullName}. This entry will always be shown.");
             return null;
         }
 

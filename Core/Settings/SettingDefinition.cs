@@ -25,6 +25,31 @@ namespace Polaris.Settings
         /// <summary>按当前语言求值之后的说明文字；<see cref="Description"/> 为 null 时同样是 null。</summary>
         public string DisplayDescription => PolarisAPI.Localization.Text(Description);
 
+        /// <summary>显示条件，为空则始终显示；见 <see cref="PolarisSettingAttribute.VisibleWhen"/>。</summary>
+        internal Func<bool> VisibleWhen { get; set; }
+
+        /// <summary>当前是否应该画出这一行；条件回调抛异常按显示处理（藏起来比多画一行更让人摸不着头脑）。</summary>
+        internal bool IsVisible
+        {
+            get
+            {
+                if (VisibleWhen == null)
+                {
+                    return true;
+                }
+
+                try
+                {
+                    return VisibleWhen();
+                }
+                catch (Exception e)
+                {
+                    PolarisAPI.Errors.Report(e, $"the visibility condition of setting {RowKey}", VisibleWhen.Method?.DeclaringType?.Assembly);
+                    return true;
+                }
+            }
+        }
+
         /// <summary>由 <see cref="SettingGroup.Add"/> 回填。</summary>
         internal SettingGroup Group { get; set; }
 
