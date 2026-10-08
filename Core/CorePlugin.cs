@@ -8,6 +8,8 @@ using HarmonyLib;
 namespace Polaris
 {
     /// <summary>Polaris 库的 BepInEx 入口：只做库自己的事（补丁、设置扫描、事件订阅扫描、资源泵），不含任何诊断或界面产品逻辑。</summary>
+    [PolarisModInfo("AAAA9731", "Helper library for Alice in Cradle BepInEx mods: settings, save, events, localization, menus, resources. 爱丽丝摇篮 BepInEx 模组的通用辅助库。",
+        DisplayName = "Polaris Core", Url = "https://github.com/AAAA9731/Polaris")]
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     public class CorePlugin : BaseUnityPlugin
     {

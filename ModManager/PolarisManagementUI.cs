@@ -538,9 +538,15 @@ namespace Polaris
         // 标题行文字：标了 PolarisModInfo 的用其展示名（带版本），否则退回文件名。
         static string Headline(PolarisModInfo info, string fallback)
         {
-            if (info == null || !info.HasModInfo)
+            if (info == null)
             {
                 return fallback;
+            }
+
+            // 没标 PolarisModInfo 的模组用 BepInEx 元数据里的名字，而不是文件路径。
+            if (!info.HasModInfo)
+            {
+                return string.IsNullOrEmpty(info.DisplayName) ? fallback : info.DisplayName;
             }
 
             return info.Version == null ? info.DisplayName : $"{info.DisplayName}  v{info.Version}";
