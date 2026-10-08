@@ -109,68 +109,6 @@ namespace Polaris.Res
             });
         }
 
-        /// <summary>
-        /// 把本模组目录下的 <paramref name="sourceDir"/> 同步到游戏资源目录 <c>StreamingAssets/&lt;gameDir&gt;</c>，让游戏自己的加载器
-        /// （<c>MTRX.loadMtiPxc</c>、<c>MTI.LoadContainerOneImage</c> 这类只认 StreamingAssets 的）能读到模组带的文件。
-        /// 只复制新增或有变化的文件（比较大小和修改时间），没变的跳过，所以每次启动调用都很便宜；不会删除目标里多出来的文件。
-        /// 某个文件被占用等原因复制失败只记警告，其余照常。
-        /// </summary>
-        /// <param name="sourceDir">相对模组根目录的源文件夹，空串表示根目录本身</param>
-        /// <param name="gameDir">相对 StreamingAssets 的目标文件夹，如 <c>"MyModRes/pxls"</c></param>
-        /// <returns>目标文件夹的绝对路径；源文件夹不存在时返回 null</returns>
-        /// <exception cref="ArgumentException">路径越出模组目录或 StreamingAssets 时抛出</exception>
-        public string MountToGame(string sourceDir, string gameDir)
-        {
-            string source = PathSandbox.Sanitize(root, Path.Combine(root, sourceDir ?? ""));
-            string streaming = Path.GetFullPath(Application.streamingAssetsPath);
-            string target = PathSandbox.Sanitize(streaming, Path.Combine(streaming, gameDir ?? ""));
-            if (source == null)
-            {
-                throw new ArgumentException($"Source directory leaves the mod directory: {sourceDir}", nameof(sourceDir));
-            }
-
-            if (target == null || string.Equals(target, streaming, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException($"Target directory must be a subfolder of StreamingAssets: {gameDir}", nameof(gameDir));
-            }
-
-            if (!Directory.Exists(source))
-            {
-                return null;
-            }
-
-            int copied = 0;
-            foreach (string file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
-            {
-                string destination = Path.Combine(target, file.Substring(source.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-                try
-                {
-                    FileInfo from = new FileInfo(file);
-                    FileInfo to = new FileInfo(destination);
-                    if (to.Exists && to.Length == from.Length && to.LastWriteTimeUtc == from.LastWriteTimeUtc)
-                    {
-                        continue;
-                    }
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(destination));
-                    File.Copy(file, destination, true);
-                    File.SetLastWriteTimeUtc(destination, from.LastWriteTimeUtc);
-                    copied++;
-                }
-                catch (Exception ex)
-                {
-                    CorePlugin.Logger?.LogWarning($"[PolarisRes] Failed to mount {file} to the game directory: {ex.Message}");
-                }
-            }
-
-            if (copied > 0)
-            {
-                CorePlugin.Logger?.LogInfo($"[PolarisRes] Mounted {copied} file(s) of {ModId} into StreamingAssets/{gameDir}.");
-            }
-
-            return target;
-        }
-
         private byte[] LoadBytes(ResourceId id, out string absolutePath)
         {
             absolutePath = PathSandbox.Sanitize(root, Path.Combine(root, id.Path));
