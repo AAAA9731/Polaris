@@ -40,12 +40,12 @@ namespace Polaris.Res
             });
         }
 
-        public IResourceLease<XX.MImage> Image(string path)
+        public IResourceLease<XX.MImage> Image(string path, TextureImportSettings settings = null)
         {
             ResourceId id = new ResourceId(ModId, ResourceKind.Image, path);
             return ResourceCache.AcquireSync<XX.MImage>(id, () =>
             {
-                IResourceLease<Texture2D> textureLease = Texture(path);
+                IResourceLease<Texture2D> textureLease = Texture(path, settings);
                 XX.MImage image;
                 try
                 {
