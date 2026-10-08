@@ -83,6 +83,60 @@ namespace Polaris.Localization
             return key;
         }
 
+        readonly List<(string Dir, string Suffix)> textDirs = [];
+
+        /// <summary>
+        /// 注册模组自带的文案文件，不用再拷进游戏的 StreamingAssets：目录下按语言族分子目录，
+        /// 文件名 <c>&lt;族&gt;&lt;后缀&gt;.txt</c>（如 <c>en/en_mymod.txt</c>、<c>zh-cn/zh-cn_mymod.txt</c>，日文族目录名是 <c>_</c>），
+        /// 格式与原版文案文件相同。游戏每次（重新）读取文案表后自动加载；注册得晚、文案表已就绪时立刻加载。某个语言缺文件就跳过。
+        /// </summary>
+        /// <param name="dir">文案根目录，通常是插件自己的文件夹</param>
+        /// <param name="suffix">文件名里语言族之后的部分，如 <c>"_mymod"</c></param>
+        public void AddTextFiles(string dir, string suffix)
+        {
+            if (string.IsNullOrEmpty(dir))
+            {
+                throw new ArgumentException("Text directory must not be empty", nameof(dir));
+            }
+
+            textDirs.Add((dir, suffix ?? ""));
+            if (TX.OTxFam != null && TX.OTxFam.Count > 0)
+            {
+                LoadTextFiles(dir, suffix ?? "");
+            }
+        }
+
+        /// <summary>供 <see cref="Patch.Patch_TX_reloadTx"/> 调用：文案表重建后，把所有登记过的文案文件重新读进去。</summary>
+        internal void LoadAllTextFiles()
+        {
+            foreach ((string dir, string suffix) in textDirs)
+            {
+                LoadTextFiles(dir, suffix);
+            }
+        }
+
+        static void LoadTextFiles(string dir, string suffix)
+        {
+            foreach (KeyValuePair<string, TX.TXFamily> family in TX.OTxFam)
+            {
+                string path = System.IO.Path.Combine(System.IO.Path.Combine(dir, family.Key), family.Key + suffix + ".txt");
+                if (!System.IO.File.Exists(path))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    TX.readTexts(System.IO.File.ReadAllText(path), family.Value);
+                }
+                catch (Exception ex)
+                {
+                    PolarisAPI.Errors.Report(ex, $"loading the text file {path}");
+                    CorePlugin.Logger.LogError($"[Polaris] Failed to load the text file {path}; skipped.");
+                }
+            }
+        }
+
         /// <summary><see cref="Text"/> 的数组版；null 进 null 出。</summary>
         public string[] TextAll(string[] raw)
         {
