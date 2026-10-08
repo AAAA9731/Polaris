@@ -81,7 +81,7 @@ namespace Polaris.Res
 
                 byte[] bytes = LoadBytes(id, out string absolutePath);
                 settings ??= new PxlsImportSettings();
-                string title = PxlsNaming.BuildTitle(ModId, id.Path);
+                string title = string.IsNullOrEmpty(settings.Title) ? PxlsNaming.BuildTitle(ModId, id.Path) : settings.Title;
                 PxlCharacter character = PxlsLoader.loadCharacterASync(title, bytes, null, settings.PixelsPerUnit, settings.AutoFlipX);
                 if (character == null)
                 {
@@ -91,7 +91,7 @@ namespace Polaris.Res
                 character.no_load_external_texture_on_first = true;
                 PxlsCharacterHandle handle = new PxlsCharacterHandle(id, title);
                 PxlsLoadOperation operation = new PxlsLoadOperation(
-                    handle, character, absolutePath, title);
+                    handle, character, absolutePath, title, settings.Texture ?? new TextureImportSettings());
                 PxlsPump.Enqueue(operation);
                 return (handle, (Action)operation.RequestDispose);
             });

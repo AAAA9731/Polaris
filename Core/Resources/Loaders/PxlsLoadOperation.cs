@@ -18,6 +18,7 @@ namespace Polaris.Res.Loaders
         private readonly PxlCharacter character;
         private readonly string absolutePxlsPath;
         private readonly string title;
+        private readonly TextureImportSettings textureSettings;
         private Texture2D[] ownedTextures;
         private XX.MImage image;
         private bool teardownRequested;
@@ -29,8 +30,10 @@ namespace Polaris.Res.Loaders
             PxlsCharacterHandle handle,
             PxlCharacter character,
             string absolutePxlsPath,
-            string title)
+            string title,
+            TextureImportSettings textureSettings)
         {
+            this.textureSettings = textureSettings;
             this.handle = handle;
             this.character = character;
             this.absolutePxlsPath = absolutePxlsPath;
@@ -156,7 +159,6 @@ namespace Polaris.Res.Loaders
                 }
 
                 ResourceId textureId = new ResourceId(handle.Id.ModId, ResourceKind.Texture, handle.Id.Path + ".texture" + i);
-                TextureImportSettings textureSettings = new TextureImportSettings();
                 ownedTextures[i] = TextureLoader.FromBytes(bytes, textureId, textureSettings);
             }
         }
