@@ -259,6 +259,12 @@ namespace Polaris
             return Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.X);
         }
 
+        /// <summary>
+        /// 切换到原版的某个标题状态（如 <c>DIFF_SELECT</c>），给想复用原版页面而不是自己开窗口的按钮回调用。
+        /// 不会记录为"打开的按钮"，所以返回 TOP 要用原版自己的流程。返回是否切成功（标题场景未建好或原版抛异常都算失败）。
+        /// </summary>
+        public bool ChangeState(SceneTitleTemp.STATE state) => TrySetState(state);
+
         /// <summary>切换标题状态机；返回是否真的切成功（场景未初始化或 changeState 抛异常都算失败）。</summary>
         bool TrySetState(SceneTitleTemp.STATE state)
         {
