@@ -92,6 +92,11 @@ PolarisInstaller.exe --silent install|uninstall --game "<游戏目录>" [--remov
 
 在 ver030i 中，现有补丁将 `UiCFG` 构造函数的标签页数量从 7 改为 8，以 `CATEG._MAX` 建出第八页，再填入 Polaris 和模组的设置项。标签图标是 ✴，页眉标题是“Polaris 设置”。实现见 `Core/Patch/Patch_UiCFG_PolarisTab.cs`；本次合并沿用这套实现。构造函数的 IL 匹配未成功时，设置项回退到“常规”页尾部。
 
+## 给模组作者
+
+- 想基于 Core 写模组：复制 [`templates/MinimalMod/`](../templates/MinimalMod/)，它能直接编译、能在游戏里跑，README 里有步骤。
+- Core 收什么、不收什么、API 稳定性怎么约定：见 [`Core/CHARTER.md`](../Core/CHARTER.md)。新增 API 前先过一遍里面的准入规则。
+
 ## 旧代码
 
 `main` 保持原管理与诊断版本，本次合并在 `feat/core-library-slim-030i` 中审核。当前 Core 基线和 GitHub 聚合框架基线都有独立本地分支，来源与具体差异见 [CORE-LIB-REVIEW.md](CORE-LIB-REVIEW.md)。完整旧 Core 保留在 `legacy` 分支和 `pre-slim-v2.0.0` 标签；当时的设计文档放在 `doc/legacy/`。
