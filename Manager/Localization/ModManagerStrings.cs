@@ -17,6 +17,9 @@
         internal const string RefreshDesc = "refresh_desc";
         internal const string RowFailed = "row_failed";
 
+        /// <summary>核心库那一行的后缀，说明它为什么没有启停。</summary>
+        internal const string CoreTag = "core_tag";
+
         /// <summary>列表底部那行"有 N 项没应用"的提醒，<c>{0}</c> 是条数。</summary>
         internal const string PendingNote = "pending_note";
 
@@ -107,6 +110,12 @@
             });
 
             // 前导两个空格是排版所需，翻译时请保留。
+            loc.Register(P + CoreTag, new LocalizedText("  (core, always on)")
+            {
+                ["zh"] = "  (核心，不可禁用)",
+                ["ja"] = "  (コア・無効化不可)",
+            });
+
             loc.Register(P + RowFailed, new LocalizedText("  (failed)")
             {
                 ["zh"] = "  (操作失败)",

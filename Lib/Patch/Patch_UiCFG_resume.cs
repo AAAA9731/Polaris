@@ -16,6 +16,11 @@ namespace Polaris.Patch
             PolarisSettingsScreen.Sync(__instance);
             SettingsStore.Snapshot();
 
+            // 标题画面从按键设置页退回来时把搜索框亮回来；ESC 菜单的搜索框跟菜单一起收放，无需处理。
+            if (__instance.is_title)
+            {
+                SettingsSearchWindow.Resume();
+            }
         }
     }
 }

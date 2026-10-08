@@ -51,6 +51,7 @@ namespace Polaris.Settings
         internal static void Append(UiCFG cfg, bool ownTab = false)
         {
             rendered.Clear();
+            SettingsSearchFilter.Begin(cfg);
             PolarisAPI.Settings.ScreenBuilt = true;
 
             IReadOnlyList<SettingGroup> groups = PolarisAPI.Settings.Groups;
@@ -66,11 +67,12 @@ namespace Polaris.Settings
             {
                 try
                 {
-                    GroupHeader(box, group, skipRule: ownTab && first);
+                    SettingsSearchFilter.GroupRecorder recorder = SettingsSearchFilter.OpenGroup(group);
+                    GroupHeader(box, group, recorder, skipRule: ownTab && first);
                     first = false;
                     foreach (SettingDefinition setting in group.Settings)
                     {
-                        SettingsRowRenderer.Render(cfg, box, setting);
+                        SettingsRowRenderer.Render(cfg, box, setting, recorder.OpenRow(setting));
                         rendered.Add(setting);
                     }
                 }
@@ -86,14 +88,14 @@ namespace Polaris.Settings
         }
 
         /// <summary>
-        /// 分区标题：一条分隔线 + 一行居中文字。分隔线沿用 <c>UiBoxDesigner.Hr</c> 的样式取值。
+        /// 分区标题：一条分隔线 + 一行居中文字。分隔线照抄 <c>UiBoxDesigner.Hr</c> 而非直接调用，因为搜索过滤需要拿到 <c>addHr</c> 返回的块（<c>Hr()</c> 不返回）。
         /// </summary>
-        static void GroupHeader(UiBoxDesigner box, SettingGroup group, bool skipRule)
+        static void GroupHeader(UiBoxDesigner box, SettingGroup group, SettingsSearchFilter.GroupRecorder recorder, bool skipRule)
         {
             if (!skipRule)
             {
                 box.Br();
-                box.addHr(new DsnDataHr
+                recorder.AddHeader(box.addHr(new DsnDataHr
                 {
                     draw_width_rate = HrWidthRatio,
                     swidth = box.use_w,
@@ -101,12 +103,12 @@ namespace Polaris.Settings
                     margin_t = HrMargin,
                     margin_b = HrMargin,
                     line_height = 1f,
-                });
+                }));
             }
 
             box.Br();
 
-            Caption(box, group.DisplayTitle, "P_PLRS_GROUP_" + group.ModId, box.use_w);
+            recorder.AddHeader(Caption(box, group.DisplayTitle, "P_PLRS_GROUP_" + group.ModId, box.use_w));
             box.Br();
         }
 
@@ -114,7 +116,7 @@ namespace Polaris.Settings
         /// 一行文字，复刻原版 <c>UiCFG.P()</c> 样式，但不直接调用它——<c>UiCFG.P()</c> 强制把参数当本地化键走 <c>TX.Get</c>，未命中时静默返回空串，会把模组的字面量画成空白。这里收的是已求值的文案。
         /// </summary>
         /// <param name="width">文字块宽度：标签用固定的标签栏宽度，分区标题铺满整行</param>
-        /// <returns>画出来的文字块。</returns>
+        /// <returns>画出来的文字块，供 <see cref="SettingsSearchFilter"/> 登记显隐。</returns>
         internal static FillBlock Caption(UiBoxDesigner box, string text, string name, float width)
         {
             return box.Br().addP(new DsnDataP

@@ -59,9 +59,10 @@ internal static class InstallEngine
             {
                 list.Add(new PayloadFile(normalized.Substring("game/".Length).Replace('/', Path.DirectorySeparatorChar), name, false));
             }
-            else if (normalized == "polaris/PolarisCore.dll")
+            else if (normalized == "polaris/PolarisCore.dll" || normalized == "polaris/PolarisLib.dll")
             {
-                list.Add(new PayloadFile(Path.Combine("BepInEx", "plugins", "PolarisCore.dll"), name, true));
+                // 管理器与核心库都放在 plugins 根目录：BepInEx 按 [BepInDependency] 保证库先加载，管理器页也只扫这一层。
+                list.Add(new PayloadFile(Path.Combine("BepInEx", "plugins", Path.GetFileName(normalized)), name, true));
             }
             else if (normalized.StartsWith("polaris/", StringComparison.Ordinal))
             {

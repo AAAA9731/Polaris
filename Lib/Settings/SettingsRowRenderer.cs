@@ -23,42 +23,46 @@ namespace Polaris.Settings
         /// <summary>超过这个选项数就从 checkbox 形态换成左右箭头形态（原版"窗口大小"就是后者）。</summary>
         const int CheckboxMaxChoices = 2;
 
-        internal static void Render(UiCFG cfg, UiBoxDesigner box, SettingDefinition setting)
+        /// <param name="row">
+        /// 本行画出来的每一个块都要登记进去，搜索过滤靠它整行收放；见 <see cref="SettingsSearchFilter"/>。
+        /// </param>
+        internal static void Render(UiCFG cfg, UiBoxDesigner box, SettingDefinition setting,
+                                    SettingsSearchFilter.RowRecorder row)
         {
             switch (setting)
             {
                 case ToggleSetting s:
-                    Label(box, s);
-                    Meter(cfg, box, s, s.Value ? 1f : 0f, 0f, 1f, 1f,
+                    Label(box, s, row);
+                    Meter(cfg, box, s, row, s.Value ? 1f : 0f, 0f, 1f, 1f,
                           checkbox: true, keys: s.DisplayStateLabels,
                           onChanged: cur => s.Value = cur >= 0.5f);
                     break;
 
                 case SliderSetting s:
-                    Label(box, s);
-                    Meter(cfg, box, s, s.Value, s.Min, s.Max, s.Step,
+                    Label(box, s, row);
+                    Meter(cfg, box, s, row, s.Value, s.Min, s.Max, s.Step,
                           checkbox: false, keys: null,
                           onChanged: cur => s.Value = cur);
                     break;
 
                 case IntSetting s:
-                    Label(box, s);
-                    Meter(cfg, box, s, s.Value, s.Min, s.Max, s.Step,
+                    Label(box, s, row);
+                    Meter(cfg, box, s, row, s.Value, s.Min, s.Max, s.Step,
                           checkbox: false, keys: null,
                           onChanged: cur => s.Value = (int)Math.Round(cur));
                     break;
 
                 // ChoiceSetting 与 EnumSetting<T> 共用：选项少用 checkbox，多用左右箭头形态。
                 case IChoiceSetting c:
-                    Label(box, setting);
+                    Label(box, setting, row);
                     bool useCheckbox = c.Choices.Length <= CheckboxMaxChoices;
-                    Meter(cfg, box, setting, c.SelectedIndex, 0f, c.Choices.Length - 1, 1f,
+                    Meter(cfg, box, setting, row, c.SelectedIndex, 0f, c.Choices.Length - 1, 1f,
                           checkbox: useCheckbox, keys: c.DisplayChoices,
                           onChanged: cur => c.SelectedIndex = (int)Math.Round(cur));
                     break;
 
                 case TextSetting s:
-                    TextField(box, s);
+                    TextField(box, s, row);
                     break;
 
                 default:
@@ -69,7 +73,8 @@ namespace Polaris.Settings
 
         /// <summary>所有带数值的行最终都落到这一个原版 meter 控件上，区别只在 checkbox_mode 与宽度。</summary>
         static void Meter(UiCFG cfg, UiBoxDesigner box, SettingDefinition s,
-                                                    float current, float min, float max, float step,
+                          SettingsSearchFilter.RowRecorder row,
+                          float current, float min, float max, float step,
                           bool checkbox, string[] keys, Action<float> onChanged)
         {
             // 三档宽度须成对取，见 SetterWidthCheckbox。
@@ -79,7 +84,8 @@ namespace Polaris.Settings
                     ? (cfg.sliderw_middle, SetterWidthChoices)
                     : (cfg.sliderw, SetterWidthNumeric);
 
-            box.addSliderCT(new DsnDataSlider
+            // 一行数值控件是两个块（meter 本体 + CtSetterMeter），须一起登记，否则过滤后剩半行。
+            aBtnMeterNel meter = box.addSliderCT(new DsnDataSlider
             {
                 name = s.RowKey,
                 title = s.RowKey,
@@ -99,13 +105,15 @@ namespace Polaris.Settings
                 fnHover = button => PolarisSettingsScreen.ShowDescription(cfg, button, s.DisplayDescription),
             }, setter);
 
+            row.Add(meter);
+            row.Add(meter.getCtSetter());
         }
 
-        static void TextField(UiBoxDesigner box, TextSetting s)
+        static void TextField(UiBoxDesigner box, TextSetting s, SettingsSearchFilter.RowRecorder row)
         {
-            Label(box, s);
+            Label(box, s, row);
             // DsnDataInput 无 fnHover 字段，文本行不会弹右侧说明框。
-            box.addInput(new DsnDataInput
+            row.Add(box.addInput(new DsnDataInput
             {
                 name = s.RowKey,
                 label = "",
@@ -117,13 +125,13 @@ namespace Polaris.Settings
                     s.Value = fld.text;
                     return true;
                 },
-            });
+            }));
         }
 
         /// <summary>行标签。名字沿用原版 "P_Config_" + 控件名 的约定，这样原版 <c>setMeterEnable</c> 能连标签一起置灰。</summary>
-        static void Label(UiBoxDesigner box, SettingDefinition s)
+        static void Label(UiBoxDesigner box, SettingDefinition s, SettingsSearchFilter.RowRecorder row)
         {
-            PolarisSettingsScreen.Caption(box, s.DisplayLabel, "P_Config_" + s.RowKey, LabelWidth);
+            row.Add(PolarisSettingsScreen.Caption(box, s.DisplayLabel, "P_Config_" + s.RowKey, LabelWidth));
         }
 
         /// <summary>把设置项当前值推回控件显示；用 <c>setValue</c> 而非 <c>setValueAndCallFunc</c>，因这是同步显示不是玩家改值。</summary>

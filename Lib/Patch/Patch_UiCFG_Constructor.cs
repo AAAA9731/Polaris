@@ -33,11 +33,24 @@ namespace Polaris.Patch
 
             // 此刻的值即"取消"要回滚到的基准。
             SettingsStore.Snapshot();
+
+            // 必须在构造函数用 BxOut.use_h 定高之前缩面板，否则滚动区不会跟着缩。
+            if (SettingsSearchWindow.Wanted(_is_title))
+            {
+                SettingsSearchWindow.ShrinkPanel(_Bx);
+            }
         }
 
-        static void Postfix(UiCFG __instance)
+        /// <summary>设置项已画完，登记表是新鲜的，可以摆出搜索框了。</summary>
+        static void Postfix(UiCFG __instance, UiBoxDesigner _Bx, bool _is_title)
         {
             PolarisTab.ApplyTabIcon(__instance);
+
+            // 条件须与 Prefix 一致，否则缩了面板却不摆搜索框会留白。
+            if (SettingsSearchWindow.Wanted(_is_title))
+            {
+                SettingsSearchWindow.ShowUnder(_Bx);
+            }
         }
     }
 }

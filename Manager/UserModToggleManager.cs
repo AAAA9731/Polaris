@@ -15,6 +15,9 @@ namespace Polaris
         internal static List<UserModRecord> Scan()
         {
             string selfFileName = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
+
+            // 管理器靠 [BepInDependency] 依赖库：库照常列出，但标为核心、不给启停。
+            string libFileName = Path.GetFileName(typeof(LibPlugin).Assembly.Location);
             var byDisplayName = new Dictionary<string, UserModRecord>(StringComparer.OrdinalIgnoreCase);
 
             if (!Directory.Exists(PolarisAPI.Paths.PluginsRoot))
@@ -36,7 +39,7 @@ namespace Polaris
                     ? fileName.Substring(0, fileName.Length - DisabledSuffix.Length)
                     : fileName;
 
-                // 不允许玩家把 Polaris 自己禁用掉。
+                // 管理器自己不列出：禁用它，这个页面本身就没了，玩家无从再启用。
                 if (string.Equals(displayName, selfFileName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
@@ -50,6 +53,7 @@ namespace Polaris
                         EnabledPath = Path.Combine(PolarisAPI.Paths.PluginsRoot, displayName),
                         DisabledPath = Path.Combine(PolarisAPI.Paths.PluginsRoot, displayName + DisabledSuffix),
                         Info = PolarisModInfoResolver.Resolve(displayName),
+                        IsCore = string.Equals(displayName, libFileName, StringComparison.OrdinalIgnoreCase),
                     };
                     byDisplayName[displayName] = record;
                 }
@@ -57,12 +61,21 @@ namespace Polaris
                 record.Enabled = isEnabled;
             }
 
-            return byDisplayName.Values.OrderBy(r => r.DisplayName, StringComparer.OrdinalIgnoreCase).ToList();
+            // 核心排最前，其余按名字。
+            return byDisplayName.Values
+                .OrderByDescending(r => r.IsCore)
+                .ThenBy(r => r.DisplayName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         /// <summary>把文件改名到目标启停状态；已在目标状态直接返回成功，失败记到 <see cref="UserModRecord.Error"/> 并记日志，不抛异常。</summary>
         internal static bool SetEnabled(UserModRecord record, bool enabled)
         {
+            if (record.IsCore)
+            {
+                return false;
+            }
+
             if (record.Enabled == enabled)
             {
                 record.Error = null;

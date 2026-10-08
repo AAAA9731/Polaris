@@ -26,6 +26,12 @@ namespace Polaris
         /// </summary>
         public PolarisModInfo Info { get; set; }
 
+        /// <summary>
+        /// 是否为 Polaris 核心库：在列表里照常显示，但没有启停按钮，也不会被 <see cref="UserModToggleManager.SetEnabled"/> 改名
+        /// （管理器靠 <c>[BepInDependency]</c> 依赖它，禁用它等于禁用管理器自己）。
+        /// </summary>
+        public bool IsCore { get; set; }
+
         /// <summary>上一次 <see cref="UserModToggleManager.SetEnabled"/> 失败时的说明；成功或未操作过时为 null。</summary>
         public string Error { get; set; }
     }

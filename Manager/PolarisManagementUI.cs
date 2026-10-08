@@ -233,7 +233,7 @@ namespace Polaris
                 return 0;
             }
 
-            string[] tokens = SettingsSearchQuery.Tokenize(query);
+            string[] tokens = Settings.SettingsSearchQuery.Tokenize(query);
             int matched = 0;
 
             try
@@ -243,7 +243,7 @@ namespace Polaris
                     PolarisModInfo info = row.Record.Info;
 
                     // 匹配文件名、展示名、作者、简介——都是原样展示的字面量，搜到什么就能看到什么。
-                    bool hit = SettingsSearchQuery.MatchesAny(
+                    bool hit = Settings.SettingsSearchQuery.MatchesAny(
                         tokens, row.Record.DisplayName,
                         info?.DisplayName, info?.Author, info?.Description);
 
@@ -278,6 +278,11 @@ namespace Polaris
         /// <summary>翻转一条记录的期望状态；翻回磁盘现状时把这条改动从缓存里撤销掉。</summary>
         static void Toggle(UserModRecord record)
         {
+            if (record.IsCore)
+            {
+                return;
+            }
+
             bool target = !TargetEnabled(record);
             if (target == record.Enabled)
             {
@@ -409,7 +414,7 @@ namespace Polaris
                 foreach (UserModRecord record in mods)
                 {
                     bool target = TargetEnabled(record);
-                    string prefix = target ? "[✓] " : "[ ] ";
+                    string prefix = record.IsCore ? "[•] " : target ? "[✓] " : "[ ] ";
                     string dirtyMark = target != record.Enabled ? "  *" : "";
                     string flagMark = FlagMark(Diagnostics.ModFlags.Lookup(record.EnabledPath, record.DisabledPath));
                     lastErrors.TryGetValue(record.DisplayName, out string error);
@@ -417,6 +422,7 @@ namespace Polaris
                     {
                         name = record.DisplayName,
                         title = prefix + Headline(record.Info, record.DisplayName) + dirtyMark + flagMark
+                                + (record.IsCore ? ModManagerStrings.Text(ModManagerStrings.CoreTag) : "")
                                 + (error != null ? ModManagerStrings.Text(ModManagerStrings.RowFailed) : ""),
                         w = box.use_w,
                         h = 26f,

@@ -4,30 +4,30 @@ namespace Polaris.Localization
     /// 搜索栏（<see cref="PolarisSearchRow"/>）的界面文案；设置界面和模组管理页共用一张表，仅提示语各用各的。
     /// 独立于 <see cref="PolarisStrings"/>，因登记时机宽松得多——玩家打开界面才第一次查到。
     /// </summary>
-    internal static class SearchStrings
+    public static class SearchStrings
     {
         /// <summary>key 前缀，与设置项的 <c>polaris.settings.</c>、管理页的 <c>polaris.manager.</c> 分开。</summary>
         const string P = "polaris.search.";
 
         /// <summary>搜索框左侧的标签。</summary>
-        internal const string Label = "label";
+        public const string Label = "label";
 
         /// <summary>搜索框为空时的提示语（设置界面用）。</summary>
-        internal const string HintSettings = "hint_settings";
+        public const string HintSettings = "hint_settings";
 
         /// <summary>搜索框为空时的提示语（模组管理页用）。</summary>
-        internal const string HintMods = "hint_mods";
+        public const string HintMods = "hint_mods";
 
         /// <summary>有查询时的状态文字，<c>{0}</c> 是命中的条数。</summary>
-        internal const string Result = "result";
+        public const string Result = "result";
 
         /// <summary>一条都没命中时的状态文字。</summary>
-        internal const string NoResult = "no_result";
+        public const string NoResult = "no_result";
 
         static bool registered;
 
         /// <summary>查一条本栏文案。<paramref name="key"/> 用本类上的常量，不要写字面量。</summary>
-        internal static string Text(string key)
+        public static string Text(string key)
         {
             return PolarisAPI.Localization.Text(LocalizedString.Sigil + P + key);
         }

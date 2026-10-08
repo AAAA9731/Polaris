@@ -8,7 +8,7 @@ namespace Polaris
     /// 一行搜索栏：标签 + 输入框 + 右侧状态文字，被设置界面与模组管理页共用同一份实现，输入走 <c>fnChangedDelay</c> 防抖。
     /// 过滤回调里不要重建所在 designer，会把正在输入的控件销毁；只应就地拨块显隐（见 <see cref="SetVisible"/>）。
     /// </summary>
-    internal sealed class PolarisSearchRow
+    public sealed class PolarisSearchRow
     {
         const float LabelWidth = 58f;
         const float StatusWidth = 132f;
@@ -42,7 +42,7 @@ namespace Polaris
         /// <param name="name">控件在 designer 里的注册名，带 <c>plrs:</c> 前缀免得撞上原版的检索名。</param>
         /// <param name="hintKey">框空着时右侧显示的提示语，用 <see cref="SearchStrings"/> 上的常量。</param>
         /// <param name="onQuery">查询变化时调用，返回命中条数（用于状态文字）；真正的过滤由它负责。</param>
-        internal PolarisSearchRow(string name, string hintKey, Func<string, int> onQuery)
+        public PolarisSearchRow(string name, string hintKey, Func<string, int> onQuery)
         {
             this.name = name;
             this.hintKey = hintKey;
@@ -50,10 +50,10 @@ namespace Polaris
         }
 
         /// <summary>当前查询串（原始输入，未切词）。空串表示没有过滤。</summary>
-        internal string Query { get; private set; } = "";
+        public string Query { get; private set; } = "";
 
         /// <summary>把搜索栏画进 <paramref name="box"/>（须已 <c>init()</c> 过）；重建界面时重画即可，<see cref="Query"/> 会带入新输入框。</summary>
-        internal void Build(Designer box)
+        public void Build(Designer box)
         {
             SearchStrings.Register();
 
@@ -112,7 +112,7 @@ namespace Polaris
         }
 
         /// <summary>按 <paramref name="query"/> 过滤并刷新状态文字。</summary>
-        internal void Apply(string query)
+        public void Apply(string query)
         {
             Query = query ?? "";
             matchCount = onQuery(Query);
@@ -120,7 +120,7 @@ namespace Polaris
         }
 
         /// <summary>清空搜索并把所有行放回来；界面收起时调用，避免下次打开对着半过滤的列表发懵。</summary>
-        internal void Reset()
+        public void Reset()
         {
             if (Query.Length == 0)
             {
@@ -138,7 +138,7 @@ namespace Polaris
         }
 
         /// <summary>界面整个没了：松开对控件的引用，别让字段拖着已销毁的对象。</summary>
-        internal void Forget()
+        public void Forget()
         {
             field = null;
             status = null;
@@ -169,7 +169,7 @@ namespace Polaris
         }
 
         /// <summary>拨一个块的显隐（搜索过滤收起一行的统一做法）；按钮还需额外 hide()/bind()，否则方向键导航仍会走进看不见的行。</summary>
-        internal static void SetVisible(DesignerRowMem.DsnMem mem, bool visible)
+        public static void SetVisible(DesignerRowMem.DsnMem mem, bool visible)
         {
             if (mem == null || mem.active == visible)
             {

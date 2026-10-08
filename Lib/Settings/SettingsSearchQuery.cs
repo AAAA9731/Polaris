@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 
-namespace Polaris
+namespace Polaris.Settings
 {
     /// <summary>
     /// 设置项搜索框的匹配规则，只做字符串判定。匹配对象一律是已按当前语言求值的显示串（非本地化键、非其它语言译文），确保玩家眼前看到的字才能搜到。
     /// </summary>
-    internal static class SettingsSearchQuery
+    public static class SettingsSearchQuery
     {
         /// <summary>把查询串切成若干条件（空白分隔，AND 语义）；空数组表示无查询，即全部命中。</summary>
-        internal static string[] Tokenize(string query)
+        public static string[] Tokenize(string query)
         {
             if (string.IsNullOrEmpty(query))
             {
@@ -25,7 +25,7 @@ namespace Polaris
         /// <paramref name="haystack"/> 是否满足全部 <paramref name="tokens"/>。
         /// <paramref name="tokens"/> 为空（没有查询）时恒为 true。
         /// </summary>
-        internal static bool Matches(string haystack, IReadOnlyList<string> tokens)
+        public static bool Matches(string haystack, IReadOnlyList<string> tokens)
         {
             if (tokens == null || tokens.Count == 0)
             {
@@ -51,7 +51,7 @@ namespace Polaris
         }
 
         /// <summary>任一 <paramref name="haystacks"/> 单独满足全部条件即算命中（条件不可分散在多个串上）。</summary>
-        internal static bool MatchesAny(IReadOnlyList<string> tokens, params string[] haystacks)
+        public static bool MatchesAny(IReadOnlyList<string> tokens, params string[] haystacks)
         {
             if (tokens == null || tokens.Count == 0)
             {
