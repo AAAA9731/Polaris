@@ -414,7 +414,7 @@ namespace Polaris
                 foreach (UserModRecord record in mods)
                 {
                     bool target = TargetEnabled(record);
-                    string prefix = record.IsCore ? "[•] " : target ? "[✓] " : "[ ] ";
+                    string prefix = target ? "[✓] " : "[ ] ";
                     string dirtyMark = target != record.Enabled ? "  *" : "";
                     string flagMark = FlagMark(Diagnostics.ModFlags.Lookup(record.EnabledPath, record.DisabledPath));
                     lastErrors.TryGetValue(record.DisplayName, out string error);
@@ -422,7 +422,6 @@ namespace Polaris
                     {
                         name = record.DisplayName,
                         title = prefix + Headline(record.Info, record.DisplayName) + dirtyMark + flagMark
-                                + (record.IsCore ? ModManagerStrings.Text(ModManagerStrings.CoreTag) : "")
                                 + (error != null ? ModManagerStrings.Text(ModManagerStrings.RowFailed) : ""),
                         w = box.use_w,
                         h = 26f,
@@ -439,6 +438,12 @@ namespace Polaris
                             return true;
                         }
                     });
+
+                    // 核心库：只把按钮锁住（原生锁定态，点不动、显示置灰），不加任何额外文案。
+                    if (record.IsCore)
+                    {
+                        rowButton.SetLocked(true, true, false);
+                    }
 
                     // 登记这一行的显隐开关；搜索过滤就是拨它，而不是重建页面（理由见 Filter）。
                     rowMems.Add(new ModRow(box.getRowManager().getBlockMemory(rowButton), record));
