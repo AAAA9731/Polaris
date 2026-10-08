@@ -1,0 +1,185 @@
+﻿using System;
+using System.IO;
+using BepInEx.Configuration;
+
+namespace Polaris.Diagnostics
+{
+    /// <summary>
+    /// 崩溃/卡死检测的阈值与开关，存在 <c>BepInEx/config/Polaris/_polaris_diagnostics.cfg</c>，刻意不走
+    /// <see cref="Settings.PolarisSettingAttribute"/>：它不进游戏设置界面，且需要在 <c>Awake</c> 就绑定完成，早于特性轨扫描。
+    /// 绑定失败则整体退回默认值。
+    /// </summary>
+    internal static class DiagnosticsConfig
+    {
+        const string FileName = "_polaris_diagnostics.cfg";
+
+        const string WatchdogSection = "Watchdog";
+        const string StormSection = "Storm";
+        const string CrashSection = "CrashWindow";
+        const string SeveritySection = "Severity";
+
+        // ================== 默认值 ==================
+        // 偏保守：宁可漏报真卡顿，也不要把正常长加载误判为卡死。
+
+        const bool DefaultEnabled = true;
+
+        /// <summary>只在控制台记一行警告的阈值。到这一步不写报告、不惊扰玩家。</summary>
+        const float DefaultWarnSeconds = 10f;
+
+        /// <summary>写报告、给下一局的告知页上膛的阈值。</summary>
+        const float DefaultReportSeconds = 30f;
+
+        /// <summary>首个 <c>Update</c> 之前专用的阈值，启动期本身就会长时间不进 <c>Update</c>。</summary>
+        const float DefaultBootReportSeconds = 90f;
+
+        const bool DefaultKillOnHang = false;
+
+        const float DefaultStormWindowSeconds = 5f;
+        const int DefaultStormThreshold = 200;
+
+        // ================== 状态 ==================
+
+        static ConfigFile file;
+        static bool resolved;
+
+        static ConfigEntry<bool> enabled;
+        static ConfigEntry<float> warnSeconds;
+        static ConfigEntry<float> reportSeconds;
+        static ConfigEntry<float> bootReportSeconds;
+        static ConfigEntry<bool> killOnHang;
+        static ConfigEntry<bool> crashWindow;
+        static ConfigEntry<float> heartbeatSeconds;
+        static ConfigEntry<float> toastCooldownSeconds;
+        static ConfigEntry<int> escalateKinds;
+        static ConfigEntry<float> criticalStormSeconds;
+        static ConfigEntry<int> criticalStormMods;
+        static ConfigEntry<float> criticalHangSeconds;
+        static ConfigEntry<float> quitCountdownSeconds;
+        static ConfigEntry<float> stormWindowSeconds;
+        static ConfigEntry<int> stormThreshold;
+
+        /// <summary>由 <c>Plugin.Awake</c> 在装看门狗之前调用一次；失败不抛，退回默认值。</summary>
+        internal static void Resolve()
+        {
+            if (resolved)
+            {
+                return;
+            }
+
+            resolved = true;
+
+            try
+            {
+                file = PolarisAPI.Paths.OpenConfig(FileName);
+                file.SaveOnConfigSet = false;
+
+                enabled = file.Bind(WatchdogSection, "Enabled", DefaultEnabled,
+                    "Enable hang detection (a background thread watches whether the main thread is still advancing frames). Crash detection stays active when this is off.");
+
+                warnSeconds = file.Bind(WatchdogSection, "WarnSeconds", DefaultWarnSeconds,
+                    "How many seconds of no main-thread progress before a warning line is written to the BepInEx log. Log only -- no report file, no player-facing notice.");
+
+                reportSeconds = file.Bind(WatchdogSection, "ReportSeconds", DefaultReportSeconds,
+                    "How many seconds of no main-thread progress before it is judged a suspected hang: a report file is written"
+                    + " and the next session's title screen tells the player about it."
+                    + " Lowering it is more sensitive, but normal long operations such as loading a save or switching scenes are then more easily misjudged.");
+
+                bootReportSeconds = file.Bind(WatchdogSection, "BootReportSeconds", DefaultBootReportSeconds,
+                    "Separate threshold used during game startup (before the first Update). In that stretch every plugin's"
+                    + " Awake, the first scene load, and the game's own asset init have not finished, so long gaps before Update are normal.");
+
+                killOnHang = file.Bind(WatchdogSection, "KillOnHang", DefaultKillOnHang,
+                    "Whether to kill the game process outright once a hang is judged. Off by default: one false positive"
+                    + " costs the player this session's progress, which is worse than hanging; a hung player can close the"
+                    + " window themselves, and the report was already written the moment it was judged.");
+
+                heartbeatSeconds = file.Bind(WatchdogSection, "HeartbeatSeconds", 30f,
+                    "How often the session marker file (used to tell how the previous session ended) is rewritten when nothing in it changed, in seconds."
+                    + " It is also rewritten immediately whenever the scene, an error summary or a hang state changes. Larger values mean less disk activity;"
+                    + " the cost is that the \"last alive\" time shown after a crash can be up to this many seconds old.");
+
+                crashWindow = file.Bind(CrashSection, "Enabled", true,
+                    "Start PolarisWatcher.exe alongside the game; if the game exits abnormally it shows a window explaining the likely cause.");
+
+
+
+                toastCooldownSeconds = file.Bind(SeveritySection, "ToastCooldownSeconds", 20f,
+                    "Minimum gap between two new toasts for the same mod. Errors inside the gap only update the counter on the existing toast.");
+
+                escalateKinds = file.Bind(SeveritySection, "EscalateKinds", 4,
+                    "How many different classes of error one mod may trigger in a session before it is escalated to a dialog that offers to disable it.");
+
+                criticalStormSeconds = file.Bind(SeveritySection, "CriticalStormSeconds", 60f,
+                    "If one mod's error storm (the same error every frame) keeps going this long, the feature is considered permanently broken and the game is ended (level 3).");
+
+                criticalStormMods = file.Bind(SeveritySection, "CriticalStormMods", 3,
+                    "If this many different mods are in an error storm at the same time, the game is ended (level 3).");
+
+                criticalHangSeconds = file.Bind(SeveritySection, "CriticalHangSeconds", 120f,
+                    "If the main thread stays unresponsive this long the game is ended (level 3). Must be larger than ReportSeconds.");
+
+
+                quitCountdownSeconds = file.Bind(SeveritySection, "QuitCountdownSeconds", 10f,
+                    "Seconds the level 3 notice stays up before the game exits (the player can also quit immediately).");
+
+                stormWindowSeconds = file.Bind(StormSection, "WindowSeconds", DefaultStormWindowSeconds,
+                    "Detection window for an exception storm, in seconds. The same class of error occurring more than Threshold times inside this window counts as a persistent failure.");
+
+                stormThreshold = file.Bind(StormSection, "Threshold", DefaultStormThreshold,
+                    "Occurrence threshold for an exception storm. Throwing once per frame is roughly 60 times per second, so the default is about three seconds of throwing every frame.");
+
+                // 绑定期间不逐项保存，全部绑完统一写一次。
+                file.Save();
+                file.SaveOnConfigSet = true;
+            }
+            catch (Exception e)
+            {
+                DiagnosticsRuntime.Logger.LogWarning(
+                    $"[Polaris] Failed to open {FileName}; diagnostics thresholds fall back to defaults for this session: {e.Message}");
+                file = null;
+            }
+        }
+
+        // ================== 读取 ==================
+        // 一律 ?? 默认值，兼容 Resolve 失败时 entry 为 null 的情况。
+
+        internal static bool WatchdogEnabled => enabled?.Value ?? DefaultEnabled;
+
+        internal static float WarnSeconds => Sane(warnSeconds?.Value ?? DefaultWarnSeconds, 2f, DefaultWarnSeconds);
+
+        internal static float ReportSeconds
+            => Sane(reportSeconds?.Value ?? DefaultReportSeconds, 5f, DefaultReportSeconds);
+
+        internal static float BootReportSeconds
+            => Sane(bootReportSeconds?.Value ?? DefaultBootReportSeconds, 15f, DefaultBootReportSeconds);
+
+        internal static float HeartbeatSeconds => Sane(heartbeatSeconds?.Value ?? 30f, 5f, 30f);
+
+        internal static bool CrashWindow => crashWindow?.Value ?? true;
+
+        internal static bool ToastEnabled => Settings.PolarisSettings.ShowInGameAlerts;
+        internal static float ToastSeconds => Sane(Settings.PolarisSettings.AlertSeconds, 2f, 8f);
+        internal static float ToastCooldownSeconds => Sane(toastCooldownSeconds?.Value ?? 20f, 1f, 20f);
+        internal static int EscalateKinds => Sane(escalateKinds?.Value ?? 4, 2, 4);
+        internal static float CriticalStormSeconds => Sane(criticalStormSeconds?.Value ?? 60f, 5f, 60f);
+        internal static int CriticalStormMods => Sane(criticalStormMods?.Value ?? 3, 2, 3);
+        internal static float CriticalHangSeconds => Sane(criticalHangSeconds?.Value ?? 120f, 20f, 120f);
+        internal static bool AutoQuit => Settings.PolarisSettings.AutoQuitOnCritical;
+        internal static float QuitCountdownSeconds => Sane(quitCountdownSeconds?.Value ?? 10f, 3f, 10f);
+
+        internal static bool KillOnHang => killOnHang?.Value ?? DefaultKillOnHang;
+
+        internal static float StormWindowSeconds
+            => Sane(stormWindowSeconds?.Value ?? DefaultStormWindowSeconds, 0.5f, DefaultStormWindowSeconds);
+
+        internal static int StormThreshold
+            => Sane(stormThreshold?.Value ?? DefaultStormThreshold, 10, DefaultStormThreshold);
+
+        /// <summary>把手改 cfg 填出的 0 或负数当作"没填"，退回默认值。</summary>
+        static float Sane(float value, float minimum, float fallback)
+            => value >= minimum ? value : fallback;
+
+        static int Sane(int value, int minimum, int fallback)
+            => value >= minimum ? value : fallback;
+    }
+}

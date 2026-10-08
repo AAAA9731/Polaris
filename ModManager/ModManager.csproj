@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 模组管理器产品：依赖核心库 PolarisCore（Core/）。 -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>ModManager</AssemblyName>
+    <RootNamespace>Polaris</RootNamespace>
+    <Product>AIC-Polaris-ModManager</Product>
+    <Version>2.1.0</Version>
+    <BepInExPluginGuid>Polaris.ModManager</BepInExPluginGuid>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <RequiresAicGame>true</RequiresAicGame>
+    <!-- 库与管理器各自生成一份 MyPluginInfo，本项目内的那份优先，属预期。 -->
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+
+  <Import Project="..\build\Polaris.Runtime.props" />
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\PolarisCore.csproj" />
+  </ItemGroup>
+
+</Project>

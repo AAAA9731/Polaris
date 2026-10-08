@@ -29,6 +29,10 @@
       <HintPath>$(AicManagedDir)\unsafeAssem.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>$(AicManagedDir)\Unity.InputSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="better">
       <HintPath>$(AicManagedDir)\better.dll</HintPath>
       <Private>false</Private>

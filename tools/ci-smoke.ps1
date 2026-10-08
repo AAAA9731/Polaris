@@ -15,14 +15,19 @@ function Run($action, [string[]]$extra = @()) {
     if (Test-Path $log) { Remove-Item $log }
     $argList = @("--silent", $action, "--game", "`"$fake`"")
     if ($extra) { $argList += $extra }
-    $p = Start-Process $exe -ArgumentList $argList -Wait -PassThru
+    $p = Start-Process $exe -ArgumentList $argList -WindowStyle Hidden -Wait -PassThru
     if ($p.ExitCode -ne 0) { throw "$action 失败，退出码 $($p.ExitCode)：" + (Get-Content $log -Raw) }
 }
 function Assert($cond, $msg) { if (-not $cond) { throw "断言失败：$msg" } }
 
 Run "install"
-Assert (Test-Path "$fake\BepInEx\plugins\PolarisCore.dll") "PolarisCore.dll 已安装"
+Assert (Test-Path "$fake\BepInEx\plugins\PolarisCore.dll") "PolarisCore.dll（核心库）已安装"
+Assert (Test-Path "$fake\BepInEx\plugins\ModManager.dll") "ModManager.dll 已安装"
 Assert (Test-Path "$fake\BepInEx\plugins\Polaris\PolarisWatcher.exe") "PolarisWatcher.exe 已安装"
+$dependencies = @('NVorbis.dll', 'System.Buffers.dll', 'System.Memory.dll', 'System.Numerics.Vectors.dll', 'System.Runtime.CompilerServices.Unsafe.dll')
+foreach ($dependency in $dependencies) {
+    Assert (Test-Path "$fake\BepInEx\plugins\Polaris\$dependency") "$dependency 已安装"
+}
 Assert (Test-Path "$fake\BepInEx\plugins\Polaris\polaris_star.png") "polaris_star.png 已安装"
 Assert (Test-Path "$fake\BepInEx\core\BepInEx.Unity.Mono.dll") "BepInEx 已安装"
 Assert ((Get-Content "$fake\winhttp.dll" -Raw) -ne "original`r`n") "winhttp.dll 已被替换"
@@ -33,6 +38,10 @@ Assert ($backups.Count -eq 1) "重复安装不应再产生备份（实际 $($bac
 
 Run "uninstall"
 Assert (-not (Test-Path "$fake\BepInEx\plugins\PolarisCore.dll")) "Polaris 已卸载"
+Assert (-not (Test-Path "$fake\BepInEx\plugins\ModManager.dll")) "ModManager.dll 已卸载"
+foreach ($dependency in $dependencies) {
+    Assert (-not (Test-Path "$fake\BepInEx\plugins\Polaris\$dependency")) "$dependency 已卸载"
+}
 Assert (Test-Path "$fake\BepInEx\core\BepInEx.Unity.Mono.dll") "只卸 Polaris 时不动 BepInEx"
 
 Run "uninstall" @("--remove-bepinex")
@@ -40,5 +49,10 @@ Assert ((Get-Content "$fake\winhttp.dll" -Raw) -eq "original`r`n") "原来的 wi
 Assert (Test-Path "$fake\BepInEx\plugins\OtherMod.dll") "其它模组没被碰"
 Assert (-not (Test-Path "$fake\BepInEx\core")) "BepInEx 已卸干净"
 
-Remove-Item -Recurse -Force $fake
+$resolvedFake = (Resolve-Path -LiteralPath $fake).Path
+$temporaryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+if (-not $resolvedFake.StartsWith($temporaryRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "冒烟测试目录不在临时目录下：$resolvedFake"
+}
+Remove-Item -LiteralPath $resolvedFake -Recurse -Force
 Write-Host "安装器冒烟测试通过。"
