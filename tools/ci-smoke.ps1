@@ -21,8 +21,8 @@ function Run($action, [string[]]$extra = @()) {
 function Assert($cond, $msg) { if (-not $cond) { throw "断言失败：$msg" } }
 
 Run "install"
-Assert (Test-Path "$fake\BepInEx\plugins\PolarisCore.dll") "PolarisCore.dll 已安装"
-Assert (Test-Path "$fake\BepInEx\plugins\PolarisLib.dll") "PolarisLib.dll 已安装（plugins 根目录）"
+Assert (Test-Path "$fake\BepInEx\plugins\PolarisCore.dll") "PolarisCore.dll（核心库）已安装"
+Assert (Test-Path "$fake\BepInEx\plugins\ModManager.dll") "ModManager.dll 已安装"
 Assert (Test-Path "$fake\BepInEx\plugins\Polaris\PolarisWatcher.exe") "PolarisWatcher.exe 已安装"
 $dependencies = @('NVorbis.dll', 'System.Buffers.dll', 'System.Memory.dll', 'System.Numerics.Vectors.dll', 'System.Runtime.CompilerServices.Unsafe.dll')
 foreach ($dependency in $dependencies) {
@@ -38,7 +38,7 @@ Assert ($backups.Count -eq 1) "重复安装不应再产生备份（实际 $($bac
 
 Run "uninstall"
 Assert (-not (Test-Path "$fake\BepInEx\plugins\PolarisCore.dll")) "Polaris 已卸载"
-Assert (-not (Test-Path "$fake\BepInEx\plugins\PolarisLib.dll")) "PolarisLib.dll 已卸载"
+Assert (-not (Test-Path "$fake\BepInEx\plugins\ModManager.dll")) "ModManager.dll 已卸载"
 foreach ($dependency in $dependencies) {
     Assert (-not (Test-Path "$fake\BepInEx\plugins\Polaris\$dependency")) "$dependency 已卸载"
 }

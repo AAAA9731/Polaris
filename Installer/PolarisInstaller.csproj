@@ -36,14 +36,14 @@
   <!-- 先构建 PolarisCore 与 PolarisWatcher，再把产物嵌进来。用 Exec 而不是 ProjectReference：
        自包含的安装器不能引用非自包含的 exe 项目（NETSDK1150）。 -->
   <Target Name="BuildPolarisFiles" BeforeTargets="BeforeBuild;BeforeResolveReferences" Condition="'$(SkipPolarisBuild)' != 'true'">
-    <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)..\Manager\PolarisCore.csproj&quot; -c $(Configuration) -nologo -v:q" />
+    <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)..\ModManager\ModManager.csproj&quot; -c $(Configuration) -nologo -v:q" />
     <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)..\Watcher\PolarisWatcher.csproj&quot; -c $(Configuration) -nologo -v:q" />
   </Target>
 
   <Target Name="EmbedPolarisFiles" AfterTargets="BuildPolarisFiles" BeforeTargets="PrepareForBuild;AssignTargetPaths">
     <ItemGroup>
-      <EmbeddedResource Include="..\Manager\bin\$(Configuration)\netstandard2.1\PolarisCore.dll" LogicalName="polaris/PolarisCore.dll" />
-      <_PolarisSupportFile Include="..\Manager\bin\$(Configuration)\netstandard2.1\*.dll;..\doc\licenses\*.txt" Exclude="..\Manager\bin\$(Configuration)\netstandard2.1\PolarisCore.dll" />
+      <!-- 核心库与模组管理器的 dll 一并嵌入，安装时由 InstallEngine 按文件名摆到 plugins 根目录。 -->
+      <_PolarisSupportFile Include="..\ModManager\bin\$(Configuration)\netstandard2.1\*.dll;..\doc\licenses\*.txt" />
       <EmbeddedResource Include="@(_PolarisSupportFile)" LogicalName="polaris/%(_PolarisSupportFile.Filename)%(_PolarisSupportFile.Extension)" />
       <EmbeddedResource Include="..\Watcher\bin\$(Configuration)\net48\PolarisWatcher.exe" LogicalName="polaris/PolarisWatcher.exe" />
       <EmbeddedResource Include="..\polaris_icon.png" LogicalName="polaris/polaris_icon.png" />

@@ -59,9 +59,9 @@ internal static class InstallEngine
             {
                 list.Add(new PayloadFile(normalized.Substring("game/".Length).Replace('/', Path.DirectorySeparatorChar), name, false));
             }
-            else if (normalized == "polaris/PolarisCore.dll" || normalized == "polaris/PolarisLib.dll")
+            else if (normalized == "polaris/PolarisCore.dll" || normalized == "polaris/ModManager.dll")
             {
-                // 管理器与核心库都放在 plugins 根目录：BepInEx 按 [BepInDependency] 保证库先加载，管理器页也只扫这一层。
+                // 核心库（PolarisCore）与模组管理器（ModManager）都放在 plugins 根目录：BepInEx 按 [BepInDependency] 保证库先加载，管理器页也只扫这一层。
                 list.Add(new PayloadFile(Path.Combine("BepInEx", "plugins", Path.GetFileName(normalized)), name, true));
             }
             else if (normalized.StartsWith("polaris/", StringComparison.Ordinal))
@@ -130,12 +130,20 @@ internal static class InstallEngine
             }
         }
 
-        string core = Path.Combine(PluginsDir(game), "PolarisCore.dll");
-        state.PolarisInstalled = File.Exists(core);
+        // 旧版只有一个 PolarisCore.dll（当时是管理器）；新版是 PolarisCore.dll（核心库）+ ModManager.dll，旧版会因哈希不符被判为需要更新。
+        string[] pluginFiles = ["PolarisCore.dll", "ModManager.dll"];
+        state.PolarisInstalled = pluginFiles.Any(name => File.Exists(Path.Combine(PluginsDir(game), name)));
         if (state.PolarisInstalled)
         {
-            PayloadFile payload = Payload().FirstOrDefault(p => p.IsPolaris && Path.GetFileName(p.RelativePath) == "PolarisCore.dll");
-            state.PolarisUpToDate = payload != null && HashFile(core) == Hash(ReadPayload(payload));
+            bool upToDate = true;
+            foreach (string name in pluginFiles)
+            {
+                string installed = Path.Combine(PluginsDir(game), name);
+                PayloadFile payload = Payload().FirstOrDefault(p => p.IsPolaris && Path.GetFileName(p.RelativePath) == name);
+                upToDate &= payload != null && File.Exists(installed) && HashFile(installed) == Hash(ReadPayload(payload));
+            }
+
+            state.PolarisUpToDate = upToDate;
         }
 
         return state;

@@ -99,7 +99,7 @@ jobs:
 
       - name: Build plugin
         if: steps.game.outputs.available == 'true'
-        run: dotnet build Manager/PolarisCore.csproj -c Release
+        run: dotnet build ModManager/ModManager.csproj -c Release
 
       - name: Publish installer
         if: steps.game.outputs.available == 'true'
@@ -122,9 +122,9 @@ jobs:
           # 给想手动安装的人：插件、崩溃观察者与图标，按游戏目录的相对位置摆好。
           $stage = "stage/BepInEx/plugins"
           New-Item -ItemType Directory -Force "$stage/Polaris" | Out-Null
-          Copy-Item Manager/bin/Release/netstandard2.1/PolarisCore.dll $stage/
-          Copy-Item Manager/bin/Release/netstandard2.1/PolarisLib.dll $stage/
-          Get-ChildItem Manager/bin/Release/netstandard2.1/*.dll | Where-Object { $_.Name -notin 'PolarisCore.dll','PolarisLib.dll' } | Copy-Item -Destination "$stage/Polaris/"
+          Copy-Item ModManager/bin/Release/netstandard2.1/PolarisCore.dll $stage/
+          Copy-Item ModManager/bin/Release/netstandard2.1/ModManager.dll $stage/
+          Get-ChildItem ModManager/bin/Release/netstandard2.1/*.dll | Where-Object { $_.Name -notin 'PolarisCore.dll','ModManager.dll' } | Copy-Item -Destination "$stage/Polaris/"
           Copy-Item doc/licenses/*.txt "$stage/Polaris/"
           Copy-Item Watcher/bin/Release/net48/PolarisWatcher.exe "$stage/Polaris/"
           Copy-Item polaris_icon.png "$stage/Polaris/"
