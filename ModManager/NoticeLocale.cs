@@ -1,5 +1,4 @@
 ﻿using System;
-using XX;
 
 namespace Polaris
 {
@@ -10,33 +9,12 @@ namespace Polaris
         {
             get
             {
-                string locale = SafeLocale();
-
-                if (locale != null && locale.StartsWith("zh", StringComparison.OrdinalIgnoreCase))
+                switch (PolarisAPI.Localization.Language)
                 {
-                    return NoticeLanguage.Chinese;
+                    case Polaris.Localization.Language.Chinese: return NoticeLanguage.Chinese;
+                    case Polaris.Localization.Language.Japanese: return NoticeLanguage.Japanese;
+                    default: return NoticeLanguage.English;
                 }
-
-                // "_" 是游戏默认语言（日文）；ja/jp 之类的显式命名同样按日文处理。
-                if (locale == "_" || (locale != null && locale.StartsWith("ja", StringComparison.OrdinalIgnoreCase)))
-                {
-                    return NoticeLanguage.Japanese;
-                }
-
-                return NoticeLanguage.English;
-            }
-        }
-
-        /// <summary>极早期读取语言可能抛异常或拿到空值；一律按"未识别"处理、退回英文，不能因此建不出告知页。</summary>
-        static string SafeLocale()
-        {
-            try
-            {
-                return TX.getCurrentFamilyName();
-            }
-            catch (Exception)
-            {
-                return null;
             }
         }
     }

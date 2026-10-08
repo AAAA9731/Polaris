@@ -83,6 +83,47 @@ namespace Polaris.Localization
             return key;
         }
 
+        /// <summary>
+        /// 当前界面语言归到的大类：<c>zh*</c> 算中文，日文族（<c>_</c> 或 <c>ja*</c>）算日文，其余算英文。
+        /// 游戏语言表没建好时按英文处理，不抛异常。每次读取都现查，需要在每帧用时请自行缓存。
+        /// </summary>
+        public Language Language => ClassifyLocale(CurrentLocale);
+
+        /// <summary>
+        /// 内联的三语文案，不用注册键：<c>Pick("你好", "Hello", "こんにちは")</c>。
+        /// 适合小模组和"本地化机制本身可能不可用"的场合（错误提示、启动失败）。日文缺省时用英文。
+        /// </summary>
+        public string Pick(string zh, string en, string ja = null) => Pick(Language, zh, en, ja);
+
+        /// <summary>同 <see cref="Pick(string, string, string)"/>，但语言由调用方给出（已缓存时用，省得每次去问游戏）。</summary>
+        public string Pick(Language language, string zh, string en, string ja = null)
+        {
+            switch (language)
+            {
+                case Language.Chinese: return zh ?? en;
+                case Language.Japanese: return ja ?? en;
+                default: return en;
+            }
+        }
+
+        /// <summary>把语言族名（<c>zh-cn</c>、<c>en</c>、<c>_</c>……）归类；null 按英文。</summary>
+        public static Language ClassifyLocale(string locale)
+        {
+            if (locale != null && locale.StartsWith("zh", StringComparison.OrdinalIgnoreCase))
+            {
+                return Language.Chinese;
+            }
+
+            // "_" 是游戏默认语言（日文）；ja/jp 之类的显式命名同样按日文处理。
+            if (locale == LocalizedText.DefaultFamily
+                || (locale != null && locale.StartsWith("ja", StringComparison.OrdinalIgnoreCase)))
+            {
+                return Language.Japanese;
+            }
+
+            return Language.English;
+        }
+
         readonly List<(string Dir, string Suffix)> textDirs = [];
 
         /// <summary>

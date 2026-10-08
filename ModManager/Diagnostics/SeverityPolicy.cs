@@ -149,7 +149,7 @@ namespace Polaris.Diagnostics
                     owner = AssemblyOwnerIndex.Of(fatal.Culprits[0]);
                 }
 
-                string reason = fatal.Reason?.Pick(AlertStrings.Language) ?? "";
+                string reason = fatal.Reason?.Pick(NoticeLocale.Current) ?? "";
                 FatalExit.Request(reason, owner?.DisplayName ?? fatal.Source, owner, writeReport: false);
             }
             catch (Exception)

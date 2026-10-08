@@ -5,15 +5,7 @@ namespace Polaris.SelfUpdate
     /// <summary>自动更新提示的三语文案（中/英/日）。英/日译文由 dsh (DeepSeek Harness) 生成。</summary>
     internal static class UpdateStrings
     {
-        static string P(string zh, string en, string ja)
-        {
-            switch (Diagnostics.AlertStrings.Language)
-            {
-                case NoticeLanguage.Chinese: return zh;
-                case NoticeLanguage.Japanese: return ja;
-                default: return en;
-            }
-        }
+        static string P(string zh, string en, string ja) => Diagnostics.AlertStrings.P(zh, en, ja);
 
         static string F(string format, object[] args)
         {

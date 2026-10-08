@@ -6,17 +6,10 @@ namespace Polaris.Diagnostics
     internal static class AlertStrings
     {
         /// <summary>当前语言；由 <see cref="InGameAlert"/> 每秒刷新一次，避免每帧去问游戏。</summary>
-        internal static NoticeLanguage Language = NoticeLanguage.English;
+        internal static Polaris.Localization.Language Language = Polaris.Localization.Language.English;
 
-        static string P(string zh, string en, string ja)
-        {
-            switch (Language)
-            {
-                case NoticeLanguage.Chinese: return zh;
-                case NoticeLanguage.Japanese: return ja;
-                default: return en;
-            }
-        }
+        internal static string P(string zh, string en, string ja)
+            => PolarisAPI.Localization.Pick(Language, zh, en, ja);
 
         static string F(string format, params object[] args)
         {

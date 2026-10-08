@@ -149,7 +149,7 @@ namespace Polaris.Diagnostics
                 if (now - lastLanguageCheck >= 1f)
                 {
                     lastLanguageCheck = now;
-                    AlertStrings.Language = NoticeLocale.Current;
+                    AlertStrings.Language = PolarisAPI.Localization.Language;
                 }
 
                 while (inbox.TryDequeue(out Inbound entry))
