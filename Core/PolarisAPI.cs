@@ -14,6 +14,9 @@
         /// <summary>事件总线：按类型订阅与派发，内置 <see cref="Events.SaveLoaded"/> 等游戏事件，模组也可自己 Post。</summary>
         public static Events.EventsAPI Events { get; } = new();
 
+        /// <summary>Harmony 补丁的安全应用：逐类应用，坏一个只报错跳过。见 <see cref="Infra.PatchingAPI"/>。</summary>
+        public static Infra.PatchingAPI Patching { get; } = new();
+
         // ── 以下是全库共用的基础设施，与任何单一子系统的领域无关（领域概念应去 UIAPI / ResAPI）。
 
         /// <summary>BepInEx 已加载插件的只读视图；软依赖判断走 <see cref="Infra.ModulesAPI.IsLoaded"/>。</summary>

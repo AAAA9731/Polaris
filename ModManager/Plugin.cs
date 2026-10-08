@@ -39,7 +39,7 @@ namespace Polaris
             Localization.PolarisStrings.Register();
 
             harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
-            PatchAllIndividually();
+            PolarisAPI.Patching.ApplyAll(harmony, typeof(Plugin).Assembly, Logger);
 
             Logger.LogMessage(Logo);
         }
@@ -57,38 +57,6 @@ namespace Polaris
             Logger.LogWarning($"[Polaris] Stalled at: {last.Where()}");
 
             PolarisErrorNotice.AdoptLastSession(last);
-        }
-
-        /// <summary>逐个类应用 Harmony 补丁而非一把 <c>PatchAll()</c>：后者全有全无，一个补丁坏了会连累其它子系统全不起来；逐类应用则坏一个报错跳过，其余照常。</summary>
-        private void PatchAllIndividually()
-        {
-            int applied = 0;
-
-            foreach (Assembly assembly in new[] { typeof(Plugin).Assembly })
-            {
-                foreach (Type type in AccessTools.GetTypesFromAssembly(assembly))
-                {
-                    try
-                    {
-                        // 面包屑：补丁应用涉及大量反射与 IL 生成，卡住时看门狗要能说出卡在哪个补丁上。
-                        using (PolarisDiagnostics.Health.Activity($"applying patch {type.Name}", type.Assembly))
-                        {
-                            // 没标 [HarmonyPatch] 的类型，Patch() 是空操作。
-                            if (harmony.CreateClassProcessor(type).Patch() != null)
-                            {
-                                applied++;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        PolarisAPI.Errors.Report(ex, $"applying patch {type.Name}", type.Assembly);
-                        Logger.LogError($"[Polaris] The feature owned by patch {type.Name} is unavailable this session.");
-                    }
-                }
-            }
-
-            Logger.LogMessage($"[Polaris] Applied {applied} Harmony patches.");
         }
 
         /// <summary>注册设置与管理入口，启动更新检查。</summary>
