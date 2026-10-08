@@ -33,6 +33,49 @@ namespace Polaris
 
                 /// <summary>判断游戏窗口当前是否持有输入焦点。</summary>
                 public static bool HasFocus => Safe(static () => IN.application_focus, true);
+
+                /// <summary>
+                /// 把动作排到下一帧的主线程执行；可从任意线程（网络回调、异步 IO）调用。
+                /// 动作里抛出的异常会被接住并记日志，不会影响其它排队的动作。
+                /// </summary>
+                public static void RunOnMainThread(Action action) => Res.Runtime.MainThreadDispatcher.Enqueue(action);
+            }
+
+            /// <summary>给玩家看的界面提示。</summary>
+            public static class UI
+            {
+                /// <summary>在屏幕边上弹一行普通提示（和拾取物品时那种提示行同一处）；<c>&amp;</c> 开头的文字当作本地化键。游戏界面还没建好时什么都不做。</summary>
+                public static void Notify(string text)
+                {
+                    Show(text, static (log, t) => log.AddLog(t), "Game.UI.Notify");
+                }
+
+                /// <summary>弹一行带警告图标的提示。</summary>
+                public static void Warn(string text)
+                {
+                    Show(text, static (log, t) => log.AddAlert(t), "Game.UI.Warn");
+                }
+
+                static void Show(string text, Action<UILog, string> add, string where)
+                {
+                    if (string.IsNullOrEmpty(text))
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        UILog log = UILog.Instance;
+                        if (log != null)
+                        {
+                            add(log, PolarisAPI.Localization.Text(text));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.Report(ex, where);
+                    }
+                }
             }
 
 
